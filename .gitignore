@@ -6,3 +6,4 @@ composer.phar
 tests.sh
 /tests/data/out
 run.sh
+CONFIGURATION.md

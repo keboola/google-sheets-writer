@@ -10,6 +10,7 @@ install:
 
 script:
   - docker-compose run --rm app
+  - docker-compose run --rm code-coverage
 
 after_success:
   - docker images

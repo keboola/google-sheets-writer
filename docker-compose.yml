@@ -3,9 +3,28 @@ services:
   app:
     build: .
     image: keboola/google-sheets-writer
+    volumes:
+      - .:/code
+    working_dir: /code
     tty: true
     stdin_open: true
-    command: ./phpunit.sh
+    command: "./phpunit.sh"
+    environment:
+      CLIENT_ID: $CLIENT_ID
+      CLIENT_SECRET: $CLIENT_SECRET
+      ACCESS_TOKEN: $ACCESS_TOKEN
+      REFRESH_TOKEN: $REFRESH_TOKEN
+      GOOGLE_DRIVE_FOLDER: $GOOGLE_DRIVE_FOLDER
+      CODECLIMATE_REPO_TOKEN: $CODECLIMATE_REPO_TOKEN
+
+  code-coverage:
+    build:
+      context: .
+      dockerfile: ./tests/docker/code-coverage/Dockerfile
+    #image: keboola/google-sheets-writer
+    command: "./code-coverage.sh"
+    volumes:
+      - ./:/code
     environment:
       CLIENT_ID: $CLIENT_ID
       CLIENT_SECRET: $CLIENT_SECRET
