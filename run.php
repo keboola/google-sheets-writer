@@ -1,8 +1,8 @@
 <?php
 
-use Keboola\GoogleDriveWriter\Application;
-use Keboola\GoogleDriveWriter\Exception\ApplicationException;
-use Keboola\GoogleDriveWriter\Exception\UserException;
+use Keboola\GoogleSheetsWriter\Application;
+use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
+use Keboola\GoogleSheetsWriter\Exception\UserException;
 use Monolog\Logger;
 
 require_once(dirname(__FILE__) . "/bootstrap.php");
