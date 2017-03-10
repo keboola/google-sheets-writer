@@ -6,11 +6,10 @@
  * @created: 29.7.13
  */
 
-namespace Keboola\GoogleDriveWriter;
+namespace Keboola\GoogleSheetsWriter;
 
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
-use Keboola\GoogleSheetsWriter\Writer\Sheet;
 use Keboola\GoogleSheetsClient\Client;
 use Psr\Http\Message\ResponseInterface;
 
@@ -64,14 +63,13 @@ class Writer
 
     public function createFileMetadata(array $file)
     {
-        $params = [
-            'parents' => $file['parents']
-        ];
-        if ($file['type'] == ConfigDefinition::SHEET) {
-            $params['mimeType'] = Client::MIME_TYPE_SPREADSHEET;
-        }
-
-        return $this->driveApi->createFileMetadata($file['title'], $params);
+        return $this->driveApi->createFileMetadata(
+            $file['title'],
+            [
+                'parents' => $file['parents'],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+            ]
+        );
     }
 
     public function createSpreadsheet(array $file)

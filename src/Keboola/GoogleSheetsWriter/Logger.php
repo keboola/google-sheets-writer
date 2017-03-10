@@ -9,7 +9,7 @@
 
 namespace Keboola\GoogleSheetsWriter;
 
-use Keboola\GoogleDriveWriter\Logger\LineFormatter;
+use Keboola\GoogleSheetsWriter\Logger\LineFormatter;
 use Monolog\Handler\StreamHandler;
 
 class Logger extends \Monolog\Logger

@@ -6,7 +6,7 @@
  * Time: 14:23
  */
 
-namespace Keboola\GoogleSheetsWriter\Writer;
+namespace Keboola\GoogleSheetsWriter;
 
 use GuzzleHttp\Exception\ClientException;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
@@ -45,7 +45,7 @@ class Sheet
 
         // upload data
         try {
-            $this->uploadValues($sheet['fileId'], $sheet);
+            $this->uploadValues($sheet, $this->inputTable);
         } catch (ClientException $e) {
             //@todo handle API exception
             throw new UserException($e->getMessage(), 0, $e, [

@@ -28,71 +28,6 @@ class FunctionalTest extends BaseTest
     }
 
     /**
-     * Create each time a new file - append date to filename
-     */
-    public function testCreateFile()
-    {
-        $this->prepareDataFiles();
-
-        $config = $this->prepareConfig();
-        $config['parameters']['tables'][] = [
-            'id' => 0,
-            'fileId' => '',
-            'title' => 'titanic',
-            'enabled' => true,
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-            'action' => ConfigDefinition::ACTION_CREATE,
-            'tableId' => 'titanic',
-        ];
-
-        $process = $this->runProcess($config);
-        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-
-        $gdFiles = $this->client->listFiles("name contains 'titanic (" . date('Y-m-d') . "' and trashed != true");
-
-        $this->assertArrayHasKey('files', $gdFiles);
-        $this->assertNotEmpty($gdFiles['files']);
-        $this->assertCount(1, $gdFiles['files']);
-    }
-
-    /**
-     * Create or replace a file
-     */
-    public function testUpdateFile()
-    {
-        $this->prepareDataFiles();
-
-        // create file
-        $gdFile = $this->client->createFile(
-            $this->tmpDataPath . '/in/tables/titanic_1.csv',
-            'titanic_1',
-            [
-                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')]
-            ]
-        );
-
-        // update file
-        $config = $this->prepareConfig();
-        $config['parameters']['tables'][] = [
-            'id' => 0,
-            'fileId' => $gdFile['id'],
-            'title' => 'titanic_2',
-            'enabled' => true,
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-            'action' => ConfigDefinition::ACTION_UPDATE,
-            'tableId' => 'titanic_2'
-        ];
-
-        $process = $this->runProcess($config);
-        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-
-        $response = $this->client->getFile($gdFile['id']);
-
-        $this->assertEquals($gdFile['id'], $response['id']);
-        $this->assertEquals('titanic_2', $response['name']);
-    }
-
-    /**
      * Create or update a sheet
      */
     public function testUpdateSpreadsheet()
@@ -240,31 +175,6 @@ class FunctionalTest extends BaseTest
 
         $response = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
         $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic.csv'), $response['values']);
-    }
-
-    /**
-     * Create New File using sync action
-     */
-    public function testSyncActionCreateFile()
-    {
-        $this->prepareDataFiles();
-
-        $config = $this->prepareConfig();
-        $config['action'] = 'createFile';
-        $config['parameters']['tables'][] = [
-            'id' => 0,
-            'title' => 'titanic',
-            'enabled' => true,
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-            'action' => ConfigDefinition::ACTION_UPDATE
-        ];
-
-        $process = $this->runProcess($config);
-        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-        $response = json_decode($process->getOutput(), true);
-        $gdFile = $this->client->getFile($response['file']['id']);
-        $this->assertArrayHasKey('id', $gdFile);
-        $this->assertEquals('titanic', $gdFile['name']);
     }
 
     /**
