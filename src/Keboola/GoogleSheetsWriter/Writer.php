@@ -8,9 +8,9 @@
 
 namespace Keboola\GoogleDriveWriter;
 
-use Keboola\GoogleDriveWriter\Configuration\ConfigDefinition;
-use Keboola\GoogleDriveWriter\Input\TableFactory;
-use Keboola\GoogleDriveWriter\Writer\Sheet;
+use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
+use Keboola\GoogleSheetsWriter\Input\TableFactory;
+use Keboola\GoogleSheetsWriter\Writer\Sheet;
 use Keboola\GoogleSheetsClient\Client;
 use Psr\Http\Message\ResponseInterface;
 

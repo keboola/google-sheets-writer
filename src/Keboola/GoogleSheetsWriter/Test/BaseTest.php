@@ -6,7 +6,7 @@
  * Time: 16:49
  */
 
-namespace Keboola\GoogleDriveWriter\Test;
+namespace Keboola\GoogleSheetsWriter\Test;
 
 use Keboola\Csv\CsvFile;
 use Keboola\Google\ClientBundle\Google\RestApi;

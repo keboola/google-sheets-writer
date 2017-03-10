@@ -5,12 +5,12 @@
  * Date: 10/08/16
  * Time: 16:45
  */
-namespace Keboola\GoogleDriveWriter\Tests;
+namespace Keboola\GoogleSheetsWriter\Tests;
 
 use Keboola\Csv\CsvFile;
-use Keboola\GoogleDriveWriter\Configuration\ConfigDefinition;
-use Keboola\GoogleDriveWriter\Test\BaseTest;
 use Keboola\GoogleSheetsClient\Client;
+use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
+use Keboola\GoogleSheetsWriter\Test\BaseTest;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 

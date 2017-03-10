@@ -4,7 +4,7 @@
  * Author: miro@keboola.com
  * Date: 10/03/2017
  */
-namespace Keboola\GoogleDriveWriter\Input;
+namespace Keboola\GoogleSheetsWriter\Input;
 
 use Keboola\Csv\CsvFile;
 

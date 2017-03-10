@@ -7,15 +7,15 @@
  * Time: 15:45
  */
 
-namespace Keboola\GoogleDriveWriter;
+namespace Keboola\GoogleSheetsWriter;
 
 use GuzzleHttp\Exception\RequestException;
 use Keboola\Google\ClientBundle\Google\RestApi;
-use Keboola\GoogleDriveWriter\Configuration\ConfigDefinition;
-use Keboola\GoogleDriveWriter\Exception\ApplicationException;
-use Keboola\GoogleDriveWriter\Exception\UserException;
-use Keboola\GoogleDriveWriter\Input\Factory;
-use Keboola\GoogleDriveWriter\Input\TableFactory;
+use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
+use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
+use Keboola\GoogleSheetsWriter\Exception\UserException;
+use Keboola\GoogleSheetsWriter\Input\Factory;
+use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Keboola\GoogleSheetsClient\Client;
 use Monolog\Handler\NullHandler;
 use Pimple\Container;

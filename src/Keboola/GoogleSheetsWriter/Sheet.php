@@ -6,13 +6,13 @@
  * Time: 14:23
  */
 
-namespace Keboola\GoogleDriveWriter\Writer;
+namespace Keboola\GoogleSheetsWriter\Writer;
 
 use GuzzleHttp\Exception\ClientException;
-use Keboola\GoogleDriveWriter\Configuration\ConfigDefinition;
-use Keboola\GoogleDriveWriter\Exception\ApplicationException;
-use Keboola\GoogleDriveWriter\Exception\UserException;
-use Keboola\GoogleDriveWriter\Input\Table;
+use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
+use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
+use Keboola\GoogleSheetsWriter\Exception\UserException;
+use Keboola\GoogleSheetsWriter\Input\Table;
 use Keboola\GoogleSheetsClient\Client;
 
 class Sheet

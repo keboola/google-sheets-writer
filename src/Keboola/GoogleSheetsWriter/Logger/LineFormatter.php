@@ -1,6 +1,6 @@
 <?php
 
-namespace Keboola\GoogleDriveWriter\Logger;
+namespace Keboola\GoogleSheetsWriter\Logger;
 
 use Keboola\Csv\CsvFile;
 

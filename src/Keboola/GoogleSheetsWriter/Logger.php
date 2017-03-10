@@ -7,7 +7,7 @@
  * Time: 12:45
  */
 
-namespace Keboola\GoogleDriveWriter;
+namespace Keboola\GoogleSheetsWriter;
 
 use Keboola\GoogleDriveWriter\Logger\LineFormatter;
 use Monolog\Handler\StreamHandler;

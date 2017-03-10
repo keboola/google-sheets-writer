@@ -6,7 +6,7 @@
  * Time: 15:50
  */
 
-namespace Keboola\GoogleDriveWriter\Configuration;
+namespace Keboola\GoogleSheetsWriter\Configuration;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;

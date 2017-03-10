@@ -7,7 +7,7 @@
  * Time: 12:45
  */
 
-namespace Keboola\GoogleDriveWriter\Exception;
+namespace Keboola\GoogleSheetsWriter\Exception;
 
 class ApplicationException extends \Exception
 {
