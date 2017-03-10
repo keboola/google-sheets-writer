@@ -1,17 +1,17 @@
-# google-drive-writer
+# Google Sheets API Writer
 
-[![Docker Repository on Quay](https://quay.io/repository/keboola/google-drive-writer/status "Docker Repository on Quay")](https://quay.io/repository/keboola/google-drive-writer)
-[![Build Status](https://travis-ci.org/keboola/google-drive-writer.svg?branch=master)](https://travis-ci.org/keboola/google-drive-writer)
-[![Code Climate](https://codeclimate.com/github/keboola/google-drive-writer/badges/gpa.svg)](https://codeclimate.com/github/keboola/google-drive-writer)
-[![Test Coverage](https://codeclimate.com/github/keboola/google-drive-writer/badges/coverage.svg)](https://codeclimate.com/github/keboola/google-drive-writer/coverage)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/keboola/google-drive-writer/blob/master/LICENSE.md)
+[![Docker Repository on Quay](https://quay.io/repository/keboola/google-sheets-writer/status "Docker Repository on Quay")](https://quay.io/repository/keboola/google-sheets-writer)
+[![Build Status](https://travis-ci.org/keboola/google-sheets-writer.svg?branch=master)](https://travis-ci.org/keboola/google-sheets-writer)
+[![Code Climate](https://codeclimate.com/github/keboola/google-sheets-writer/badges/gpa.svg)](https://codeclimate.com/github/keboola/google-sheets-writer)
+[![Test Coverage](https://codeclimate.com/github/keboola/google-sheets-writer/badges/coverage.svg)](https://codeclimate.com/github/keboola/google-sheets-writer/coverage)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/keboola/google-sheets-writer/blob/master/LICENSE.md)
 
 Writes data into Goole Drive files and spreadsheets.
 
 ## Example configuration
 
-```yaml
-TBC
+```json
+{}
 ```
 
 ## OAuth Registration
@@ -28,8 +28,8 @@ Note that this writer is using [Keboola OAuth Bundle](https://github.com/keboola
 
 ```
 { 
-    "component_id": "keboola.ex-google-drive",
-    "friendly_name": "Google Drive Extractor",
+    "component_id": "keboola.wr-google-sheets",
+    "friendly_name": "Google Sheets Writer",
     "app_key": "XXX.apps.googleusercontent.com",
     "app_secret": "",
     "auth_url": "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&redirect_uri=%%redirect_uri%%&client_id=%%client_id%%&access_type=offline&prompt=consent&scope=https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/spreadsheets.readonly",
@@ -42,8 +42,8 @@ Note that this writer is using [Keboola OAuth Bundle](https://github.com/keboola
 
 App is developed on localhost using TDD.
 
-1. Clone from repository: `git clone git@github.com:keboola/google-drive-writer.git`
-2. Change directory: `cd google-drive-writer`
+1. Clone from repository: `git clone git@github.com:keboola/google-sheets-writer.git`
+2. Change directory: `cd google-sheets-writer`
 3. Install dependencies: `composer install --no-interaction`
 4. Create `tests.sh` file from template `tests.sh.template`. 
 5. You will need working OAuth credentials. 
