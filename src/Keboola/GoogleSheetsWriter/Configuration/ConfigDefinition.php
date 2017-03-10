@@ -13,9 +13,6 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class ConfigDefinition implements ConfigurationInterface
 {
-    const TYPE_FILE = 'file';
-    const SHEET = 'sheet';
-
     const ACTION_CREATE = 'create';
     const ACTION_UPDATE = 'update';
     const ACTION_APPEND = 'append';
