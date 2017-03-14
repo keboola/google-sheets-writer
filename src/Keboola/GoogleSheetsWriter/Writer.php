@@ -66,7 +66,7 @@ class Writer
         return $this->driveApi->createFileMetadata(
             $file['title'],
             [
-                'parents' => $file['parents'],
+                'parents' => [$file['folder']['id']],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET
             ]
         );

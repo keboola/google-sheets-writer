@@ -162,19 +162,15 @@ class Sheet
      */
     private function syncFileMetadata($sheet, $gdFile)
     {
-        $parentsToAdd = [];
-        foreach ($sheet['parents'] as $parent) {
-            if (false === array_search($parent, $gdFile['parents'])) {
-                $parentsToAdd[] = $parent;
-            }
-        }
         $body = [];
+        $params = [];
+
+        if (false === array_search($sheet['folder']['id'], $gdFile['parents'])) {
+            $params['addParents'] = $sheet['folder']['id'];
+        }
+
         if ($sheet['title'] !== $gdFile['name']) {
             $body['name'] = $sheet['title'];
-        }
-        $params = [];
-        if (!empty($parentsToAdd)) {
-            $params['addParents'] = $parentsToAdd;
         }
 
         if (!empty($body) || !empty($params)) {

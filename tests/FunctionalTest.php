@@ -39,7 +39,7 @@ class FunctionalTest extends BaseTest
             $this->dataPath . '/in/tables/titanic_1.csv',
             'titanic_1',
             [
-                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET
             ]
         );
@@ -53,7 +53,7 @@ class FunctionalTest extends BaseTest
             'id' => 0,
             'fileId' => $gdFile['id'],
             'title' => 'titanic',
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetId' => $sheetId,
             'sheetTitle' => 'casualties',
             'tableId' => 'titanic_2',
@@ -109,7 +109,7 @@ class FunctionalTest extends BaseTest
             'id' => 0,
             'fileId' => $gdFile['id'],
             'title' => 'pirates',
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetId' => $sheetId,
             'sheetTitle' => $newSheetTitle,
             'tableId' => 'large',
@@ -162,7 +162,7 @@ class FunctionalTest extends BaseTest
             'id' => 0,
             'fileId' => $gdFile['id'],
             'title' => 'titanic',
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetId' => $sheetId,
             'sheetTitle' => 'casualties',
             'tableId' => 'titanic_2_headerless',
@@ -190,7 +190,7 @@ class FunctionalTest extends BaseTest
             'id' => 0,
             'title' => 'titanic',
             'enabled' => true,
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'action' => ConfigDefinition::ACTION_UPDATE
         ];
 
@@ -225,7 +225,7 @@ class FunctionalTest extends BaseTest
             'id' => 0,
             'fileId' => $gdFile['id'],
             'title' => 'titanic',
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetTitle' => 'Sheet2',
             'enabled' => true,
             'action' => ConfigDefinition::ACTION_UPDATE
@@ -276,7 +276,7 @@ class FunctionalTest extends BaseTest
             'id' => 0,
             'fileId' => $gdFile['id'],
             'title' => 'titanic',
-            'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetId' => $sheet2Id
         ];
 
