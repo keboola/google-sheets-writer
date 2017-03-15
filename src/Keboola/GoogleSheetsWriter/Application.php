@@ -110,6 +110,18 @@ class Application
         ];
     }
 
+    protected function getSpreadsheetAction()
+    {
+        /** @var Writer $writer */
+        $writer = $this->container['writer'];
+        $res = $writer->getSpreadsheet($this->container['parameters']['tables'][0]['fileId']);
+
+        return [
+            'status' => 'ok',
+            'spreadsheet' => $res
+        ];
+    }
+
     protected function createSpreadsheetAction()
     {
         /** @var Writer $writer */

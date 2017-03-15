@@ -63,13 +63,18 @@ class Writer
 
     public function createFileMetadata(array $file)
     {
-        return $this->driveApi->createFileMetadata(
-            $file['title'],
-            [
-                'parents' => [$file['folder']['id']],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
-            ]
-        );
+        $params = [
+            'mimeType' => Client::MIME_TYPE_SPREADSHEET
+        ];
+        if (isset($file['folder']['id'])) {
+            $params['parents'] = [$file['folder']['id']];
+        }
+        return $this->driveApi->createFileMetadata($file['title'], $params);
+    }
+
+    public function getSpreadsheet($fileId)
+    {
+        return $this->driveApi->getSpreadsheet($fileId);
     }
 
     public function createSpreadsheet(array $file)

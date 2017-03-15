@@ -31,12 +31,6 @@ class Sheet
 
     public function process($sheet)
     {
-        // get metadata from Google Drive file
-        $gdFile = $this->getFile($sheet);
-
-        // sync metadata (parent folder, title)
-        $this->syncFileMetadata($sheet, $gdFile);
-
         // update sheets metadata (title, rows and cols count) first
         $this->updateSheetMetadata($sheet, [
             'rowCount' => $this->inputTable->getRowCount(),
@@ -90,23 +84,6 @@ class Sheet
         return $prefix . $alphas[$remainder];
     }
 
-
-    private function getFile($sheet)
-    {
-        try {
-            return $this->client->getFile($sheet['fileId'], ['id', 'name', 'parents']);
-        } catch (ClientException $e) {
-            if ($e->getResponse()->getStatusCode() == 404) {
-                throw new UserException(sprintf(
-                    'File %s (%s) not found',
-                    $sheet['title'],
-                    $sheet['fileId']
-                ));
-            }
-            throw $e;
-        }
-    }
-
     private function uploadValues($sheet, Table $inputTable)
     {
         // clear values
@@ -152,30 +129,6 @@ class Sheet
         }
 
         return $responses;
-    }
-
-    /**
-     * Sync title and parent folder
-     *
-     * @param $sheet
-     * @param $gdFile
-     */
-    private function syncFileMetadata($sheet, $gdFile)
-    {
-        $body = [];
-        $params = [];
-
-        if (false === array_search($sheet['folder']['id'], $gdFile['parents'])) {
-            $params['addParents'] = $sheet['folder']['id'];
-        }
-
-        if ($sheet['title'] !== $gdFile['name']) {
-            $body['name'] = $sheet['title'];
-        }
-
-        if (!empty($body) || !empty($params)) {
-            $this->client->updateFileMetadata($gdFile['id'], $body, $params);
-        }
     }
 
     /**

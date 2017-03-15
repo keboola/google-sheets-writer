@@ -37,9 +37,9 @@ class FunctionalTest extends BaseTest
         // create sheet
         $gdFile = $this->client->createFile(
             $this->dataPath . '/in/tables/titanic_1.csv',
-            'titanic_1',
+            'titanic',
             [
-                'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET
             ]
         );
@@ -131,7 +131,7 @@ class FunctionalTest extends BaseTest
         );
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
-        $this->assertEquals('pirates', $response['properties']['title']);
+        $this->assertEquals('titanic_1', $response['properties']['title']);
         $this->assertEquals($newSheetTitle, $response['sheets'][0]['properties']['title']);
         $this->assertEquals($this->csvToArray($inputCsvPath), $values['values']);
     }
@@ -287,6 +287,40 @@ class FunctionalTest extends BaseTest
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
         $this->assertCount(1, $gdSpreadsheet['sheets']);
+    }
+
+    /**
+     * Create New Spreadsheet using sync action
+     */
+    public function testSyncActionGetSpreadsheet()
+    {
+        $this->prepareDataFiles();
+
+        // create spreadsheet
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'titanic',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+            ]
+        );
+
+        $config = $this->prepareConfig();
+        $config['action'] = 'getSpreadsheet';
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'title' => 'titanic',
+            'fileId' => $gdFile['id'],
+            'enabled' => true,
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'action' => ConfigDefinition::ACTION_UPDATE
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+        $response = json_decode($process->getOutput(), true);
+        $this->assertEquals($gdFile['id'], $response['spreadsheet']['spreadsheetId']);
     }
 
     /**
