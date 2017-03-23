@@ -86,7 +86,14 @@ class Writer
 
     public function addSheet($sheet)
     {
-        return $this->driveApi->addSheet(
+        $spreadsheet = $this->driveApi->getSpreadsheet($sheet['fileId']);
+        foreach ($spreadsheet['sheets'] as $gdSheet) {
+            if ($gdSheet['properties']['title'] == $sheet['sheetTitle']) {
+                return $gdSheet['properties'];
+            }
+        }
+
+        $addSheetResponse = $this->driveApi->addSheet(
             $sheet['fileId'],
             [
                 'properties' => [
@@ -94,6 +101,8 @@ class Writer
                 ]
             ]
         );
+
+        return $addSheetResponse['replies'][0]['addSheet']['properties'];
     }
 
     public function deleteSheet($sheet)

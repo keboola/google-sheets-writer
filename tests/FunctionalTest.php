@@ -71,6 +71,8 @@ class FunctionalTest extends BaseTest
         $this->assertEquals('titanic', $response['properties']['title']);
         $this->assertEquals('casualties', $response['sheets'][0]['properties']['title']);
         $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
+
+        $this->client->deleteFile($gdFile['id']);
     }
 
     /**
@@ -134,6 +136,8 @@ class FunctionalTest extends BaseTest
         $this->assertEquals('titanic_1', $response['properties']['title']);
         $this->assertEquals($newSheetTitle, $response['sheets'][0]['properties']['title']);
         $this->assertEquals($this->csvToArray($inputCsvPath), $values['values']);
+
+        $this->client->deleteFile($gdFile['id']);
     }
 
     /**
@@ -175,6 +179,8 @@ class FunctionalTest extends BaseTest
 
         $response = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
         $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic.csv'), $response['values']);
+
+        $this->client->deleteFile($gdFile['id']);
     }
 
     /**
@@ -200,6 +206,8 @@ class FunctionalTest extends BaseTest
         $gdFile = $this->client->getSpreadsheet($response['spreadsheet']['spreadsheetId']);
         $this->assertArrayHasKey('spreadsheetId', $gdFile);
         $this->assertEquals('titanic', $gdFile['properties']['title']);
+
+        $this->client->deleteFile($response['spreadsheet']['spreadsheetId']);
     }
 
     /**
@@ -234,12 +242,60 @@ class FunctionalTest extends BaseTest
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
         $response = json_decode($process->getOutput(), true);
-        $this->assertArrayHasKey('replies', $response['sheet']);
-        $this->assertArrayHasKey('spreadsheetId', $response['sheet']);
 
-        $gdFile = $this->client->getSpreadsheet($response['sheet']['spreadsheetId']);
-        $this->assertCount(2, $gdFile['sheets']);
-        $this->assertEquals('Sheet2', $gdFile['sheets'][1]['properties']['title']);
+        $this->assertArrayHasKey('sheetId', $response['sheet']);
+        $this->assertArrayHasKey('title', $response['sheet']);
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $this->assertCount(2, $gdSpreadsheet['sheets']);
+        $this->assertEquals('Sheet2', $gdSpreadsheet['sheets'][1]['properties']['title']);
+
+        $this->client->deleteFile($gdFile['id']);
+    }
+
+    /**
+     * Add Sheet with same title to a Spreadsheet using sync action
+     * This will return the existing sheet resource
+     */
+    public function testSyncActionAddSheetExisting()
+    {
+        $this->prepareDataFiles();
+
+        // create spreadsheet
+        $sheetTitle = 'titanic';
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'titanic',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+            ]
+        );
+
+        $config = $this->prepareConfig();
+        $config['action'] = 'addSheet';
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'titanic',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetTitle' => $sheetTitle,
+            'enabled' => true,
+            'action' => ConfigDefinition::ACTION_UPDATE
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+        $response = json_decode($process->getOutput(), true);
+
+        $this->assertArrayHasKey('sheetId', $response['sheet']);
+        $this->assertArrayHasKey('title', $response['sheet']);
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $this->assertCount(1, $gdSpreadsheet['sheets']);
+        $this->assertEquals($sheetTitle, $gdSpreadsheet['sheets'][0]['properties']['title']);
+
+        $this->client->deleteFile($gdFile['id']);
     }
 
     public function testSyncActionDeleteSheet()
@@ -287,6 +343,8 @@ class FunctionalTest extends BaseTest
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
         $this->assertCount(1, $gdSpreadsheet['sheets']);
+
+        $this->client->deleteFile($gdFile['id']);
     }
 
     /**
@@ -321,6 +379,8 @@ class FunctionalTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
         $response = json_decode($process->getOutput(), true);
         $this->assertEquals($gdFile['id'], $response['spreadsheet']['spreadsheetId']);
+
+        $this->client->deleteFile($gdFile['id']);
     }
 
     /**
