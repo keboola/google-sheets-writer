@@ -31,14 +31,20 @@ class Sheet
 
     public function process($sheet)
     {
-        // update sheets metadata (title, rows and cols count) first
-        $this->updateSheetMetadata($sheet, [
-            'rowCount' => $this->inputTable->getRowCount(),
-            'columnCount' => $this->inputTable->getColumnCount()
-        ]);
-
-        // upload data
         try {
+            // update sheets metadata (title, rows and cols count) first
+            // workaround for bug in API, update columns first and then both
+            $this->updateSheetMetadata($sheet, [
+                'columnCount' => $this->inputTable->getColumnCount(),
+                'rowCount' => 5
+            ]);
+
+            $this->updateSheetMetadata($sheet, [
+                'columnCount' => $this->inputTable->getColumnCount(),
+                'rowCount' => $this->inputTable->getRowCount()
+            ]);
+
+            // upload data
             $this->uploadValues($sheet, $this->inputTable);
         } catch (ClientException $e) {
             //@todo handle API exception

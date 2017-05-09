@@ -100,7 +100,7 @@ class FunctionalTest extends BaseTest
         touch($inputCsvPath);
         $inputCsv = new CsvFile($inputCsvPath);
         $inputCsv->writeRow(['id', 'random_string']);
-        for ($i = 0; $i < 2000; $i++) {
+        for ($i = 0; $i < 80000; $i++) {
             $inputCsv->writeRow([$i, uniqid()]);
         }
 
@@ -392,7 +392,7 @@ class FunctionalTest extends BaseTest
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
 
         $process = new Process(sprintf('php run.php --data=%s', $this->tmpDataPath));
-        $process->setTimeout(180);
+        $process->setTimeout(300);
         $process->run();
 
         return $process;
