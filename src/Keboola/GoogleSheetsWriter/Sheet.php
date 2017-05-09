@@ -34,10 +34,12 @@ class Sheet
         try {
             // update sheets metadata (title, rows and cols count) first
             // workaround for bug in API, update columns first and then both
-            $this->updateSheetMetadata($sheet, [
-                'columnCount' => $this->inputTable->getColumnCount(),
-                'rowCount' => 5
-            ]);
+            if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
+                $this->updateSheetMetadata($sheet, [
+                    'columnCount' => $this->inputTable->getColumnCount(),
+                    'rowCount' => 1
+                ]);
+            }
 
             $this->updateSheetMetadata($sheet, [
                 'columnCount' => $this->inputTable->getColumnCount(),
@@ -92,11 +94,6 @@ class Sheet
 
     private function uploadValues($sheet, Table $inputTable)
     {
-        // clear values
-        if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
-            $this->client->clearSpreadsheetValues($sheet['fileId'], urlencode($sheet['sheetTitle']));
-        }
-
         // insert new values
         $csvFile = $inputTable->getCsvFile();
         $offset = 1;

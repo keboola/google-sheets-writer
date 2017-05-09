@@ -7,3 +7,4 @@ tests.sh
 /tests/data/out
 run.sh
 CONFIGURATION.md
+.DS_Store
