@@ -32,9 +32,22 @@ class Sheet
     public function process($sheet)
     {
         try {
+            $rowCount = $this->inputTable->getRowCount();
+            $columnCount = $this->inputTable->getColumnCount();
+
+            // update sheets metadata (title, rows and cols count) first
+            // workaround for bug in API, update columns first and then both
+            // rowCount is set to 3 to avoid "frozen headers"
+            if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
+                $this->updateSheetMetadata($sheet, [
+                    'columnCount' => $columnCount,
+                    'rowCount' => ($columnCount < 3) ? $columnCount : 3
+                ]);
+            }
+
             $this->updateSheetMetadata($sheet, [
-                'columnCount' => $this->inputTable->getColumnCount(),
-                'rowCount' => $this->inputTable->getRowCount()
+                'columnCount' => $columnCount,
+                'rowCount' => $rowCount
             ]);
 
             // upload data
