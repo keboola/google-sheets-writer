@@ -32,15 +32,6 @@ class Sheet
     public function process($sheet)
     {
         try {
-            // update sheets metadata (title, rows and cols count) first
-            // workaround for bug in API, update columns first and then both
-            if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
-                $this->updateSheetMetadata($sheet, [
-                    'columnCount' => $this->inputTable->getColumnCount(),
-                    'rowCount' => 1
-                ]);
-            }
-
             $this->updateSheetMetadata($sheet, [
                 'columnCount' => $this->inputTable->getColumnCount(),
                 'rowCount' => $this->inputTable->getRowCount()
