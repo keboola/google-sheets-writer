@@ -121,6 +121,16 @@ class Sheet
                     );
                     break;
                 case ConfigDefinition::ACTION_APPEND:
+                    // if sheet already contains header, strip header from values to be uploaded
+                    $sheetValues = $this->client->getSpreadsheetValues(
+                        $sheet['fileId'],
+                        urlencode($sheet['sheetTitle'])
+                    );
+
+                    if (!empty($sheetValues['values'])) {
+                        array_shift($values);
+                    }
+
                     $responses[] = $this->client->appendSpreadsheetValues(
                         $sheet['fileId'],
                         urlencode($sheet['sheetTitle']),
