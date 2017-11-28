@@ -32,23 +32,26 @@ class Sheet
     public function process($sheet)
     {
         try {
-            $rowCount = $this->inputTable->getRowCount();
-            $columnCount = $this->inputTable->getColumnCount();
-
             // update sheets metadata (title, rows and cols count) first
             // workaround for bug in API, update columns first and then both
             // rowCount is set to 3 to avoid "frozen headers"
+            $gridProperties = [];
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
+                $rowCount = $this->inputTable->getRowCount();
+                $columnCount = $this->inputTable->getColumnCount();
+
+                $gridProperties = [
+                    'columnCount' => $columnCount,
+                    'rowCount' => $rowCount
+                ];
+
                 $this->updateSheetMetadata($sheet, [
                     'columnCount' => $columnCount,
                     'rowCount' => ($columnCount < 3) ? $columnCount : 3
                 ]);
             }
 
-            $this->updateSheetMetadata($sheet, [
-                'columnCount' => $columnCount,
-                'rowCount' => $rowCount
-            ]);
+            $this->updateSheetMetadata($sheet, $gridProperties);
 
             // upload data
             $this->uploadValues($sheet, $this->inputTable);
@@ -98,11 +101,11 @@ class Sheet
 
     private function uploadValues($sheet, Table $inputTable)
     {
-        // insert new values
-        $csvFile = $inputTable->getCsvFile();
+        // insert new values, 1000 rows at a time
+        $responses = [];
         $offset = 1;
         $limit = 1000;
-        $responses = [];
+        $csvFile = $inputTable->getCsvFile();
         while ($csvFile->current()) {
             $i = 0;
             $values = [];
@@ -114,38 +117,54 @@ class Sheet
 
             switch ($sheet['action']) {
                 case ConfigDefinition::ACTION_UPDATE:
-                    $responses[] = $this->client->updateSpreadsheetValues(
-                        $sheet['fileId'],
-                        $this->getRange($sheet['sheetTitle'], $inputTable->getColumnCount(), $offset, $limit),
-                        $values
+                    $range = $this->getRange(
+                        $sheet['sheetTitle'],
+                        $inputTable->getColumnCount(),
+                        $offset,
+                        $limit
                     );
+                    $responses[] = $this->updateValues($sheet, $values, $range);
                     break;
                 case ConfigDefinition::ACTION_APPEND:
                     // if sheet already contains header, strip header from values to be uploaded
-                    $sheetValues = $this->client->getSpreadsheetValues(
-                        $sheet['fileId'],
-                        urlencode($sheet['sheetTitle'])
-                    );
+                    if ($offset === 1) {
+                        $sheetValues = $this->client->getSpreadsheetValues(
+                            $sheet['fileId'],
+                            urlencode($sheet['sheetTitle'])
+                        );
 
-                    if (!empty($sheetValues['values'])) {
-                        array_shift($values);
+                        if (!empty($sheetValues['values'])) {
+                            array_shift($values);
+                        }
                     }
-
-                    $responses[] = $this->client->appendSpreadsheetValues(
-                        $sheet['fileId'],
-                        urlencode($sheet['sheetTitle']),
-                        $values
-                    );
+                    $responses[] = $this->appendValues($sheet, $values);
                     break;
                 default:
                     throw new ApplicationException(sprintf("Action '%s' not allowed", $sheet['action']));
                     break;
             }
-
             $offset = $offset + $i;
         }
 
         return $responses;
+    }
+
+    private function updateValues($sheet, $values, $range)
+    {
+        return $this->client->updateSpreadsheetValues(
+            $sheet['fileId'],
+            $range,
+            $values
+        );
+    }
+
+    private function appendValues($sheet, $values)
+    {
+        $responses[] = $this->client->appendSpreadsheetValues(
+            $sheet['fileId'],
+            $sheet['sheetTitle'],
+            $values
+        );
     }
 
     /**
@@ -157,25 +176,28 @@ class Sheet
      *          'rowCount' => NUMBER OF ROWS
      *          'columnCount' => NUMBER OF COLUMNS
      *      ]
+     * @return mixed
      */
-    private function updateSheetMetadata($sheet, $gridProperties)
+    private function updateSheetMetadata($sheet, $gridProperties = [])
     {
         // update sheets properties - title and gridProperties
-        $requests[] = [
+        $request = [
             'updateSheetProperties' => [
                 'properties' => [
                     'sheetId' => $sheet['sheetId'],
                     'title' => $sheet['sheetTitle'],
-                    'gridProperties' => $gridProperties
                 ],
-                'fields' => 'title,gridProperties'
+                'fields' => 'title'
             ]
         ];
 
-        if (!empty($requests)) {
-            $this->client->batchUpdateSpreadsheet($sheet['fileId'], [
-                'requests' => $requests
-            ]);
+        if (!empty($gridProperties)) {
+            $request['updateSheetProperties']['properties']['gridProperties'] = $gridProperties;
+            $request['updateSheetProperties']['fields'] = 'title,gridProperties';
         }
+
+        return $this->client->batchUpdateSpreadsheet($sheet['fileId'], [
+            'requests' => [$request]
+        ]);
     }
 }

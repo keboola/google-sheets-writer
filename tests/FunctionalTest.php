@@ -177,10 +177,71 @@ class FunctionalTest extends BaseTest
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
 
+        $config2 = $config;
+        $config2['parameters']['tables'][0]['tableId'] = 'titanic_2_append_2';
+        $process = $this->runProcess($config2);
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+
         $response = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
         $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic.csv'), $response['values']);
 
         $this->client->deleteFile($gdFile['id']);
+    }
+
+    public function testAppendSheetLarge()
+    {
+        $this->prepareDataFiles();
+
+        // create sheet
+        $gdFile = $this->client->createFileMetadata(
+            'titanic_1',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+            ]
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
+
+        // create large file
+        $inputCsvPath = $this->tmpDataPath . '/in/tables/large-append.csv';
+        touch($inputCsvPath);
+        $inputCsv = new CsvFile($inputCsvPath);
+        $inputCsv->writeRow(['id', 'random_string']);
+        for ($i = 0; $i < 1000; $i++) {
+            $inputCsv->writeRow([$i, uniqid()]);
+        }
+
+        // update sheet
+        $newSheetTitle = 'Long John Silver';
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'pirates',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => $sheetId,
+            'sheetTitle' => $newSheetTitle,
+            'tableId' => 'large-append',
+            'action' => ConfigDefinition::ACTION_APPEND,
+            'enabled' => true
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+        $response = $this->client->getSpreadsheetValues($gdFile['id'], $newSheetTitle);
+        $this->assertCount(1001, $response['values']);
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+        $response = $this->client->getSpreadsheetValues($gdFile['id'], $newSheetTitle);
+        $this->assertCount(2001, $response['values']);
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+        $response = $this->client->getSpreadsheetValues($gdFile['id'], $newSheetTitle);
+        $this->assertCount(3001, $response['values']);
     }
 
     public function testAppendToEmptySheet()
@@ -449,6 +510,10 @@ class FunctionalTest extends BaseTest
         $fs->copy(
             $this->dataPath . '/in/tables/titanic_2_append.csv',
             $this->tmpDataPath . '/in/tables/titanic_2_append.csv'
+        );
+        $fs->copy(
+            $this->dataPath . '/in/tables/titanic_2_append_2.csv',
+            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv'
         );
     }
 }
