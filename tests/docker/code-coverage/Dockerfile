@@ -1,4 +1,4 @@
-FROM php:5.6-fpm
+FROM php:7.1
 MAINTAINER Miroslav Cillik <miro@keboola.com>
 
 # Deps
