@@ -8,9 +8,9 @@
 
 namespace Keboola\GoogleSheetsWriter;
 
-use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Keboola\GoogleSheetsClient\Client;
+use Keboola\GoogleSheetsWriter\Logger\Logger;
 use Psr\Http\Message\ResponseInterface;
 
 class Writer
@@ -86,7 +86,13 @@ class Writer
 
     public function addSheet($sheet)
     {
+        $this->logger->debug('Add Sheet action');
         $spreadsheet = $this->driveApi->getSpreadsheet($sheet['fileId']);
+        $this->logger->debug('get spreadsheet', [
+            'response' => [
+                'spreadsheet' => $spreadsheet
+            ]
+        ]);
         foreach ($spreadsheet['sheets'] as $gdSheet) {
             if ($gdSheet['properties']['title'] == $sheet['sheetTitle']) {
                 return $gdSheet['properties'];
@@ -101,6 +107,9 @@ class Writer
                 ]
             ]
         );
+        $this->logger->debug('add sheet', [
+            'response' => $addSheetResponse
+        ]);
 
         return $addSheetResponse['replies'][0]['addSheet']['properties'];
     }

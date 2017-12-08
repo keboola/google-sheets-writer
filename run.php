@@ -3,7 +3,7 @@
 use Keboola\GoogleSheetsWriter\Application;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
-use Monolog\Logger;
+use Keboola\GoogleSheetsWriter\Logger\Logger;
 
 require_once(dirname(__FILE__) . "/bootstrap.php");
 
@@ -16,6 +16,7 @@ try {
     }
     $config = json_decode(file_get_contents($arguments["data"] . "/config.json"), true);
     $config['parameters']['data_dir'] = $arguments['data'];
+    $config['app_name'] = APP_NAME;
 
     $app = new Application($config);
     $result = $app->run();

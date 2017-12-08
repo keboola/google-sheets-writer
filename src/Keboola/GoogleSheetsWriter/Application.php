@@ -14,10 +14,10 @@ use Keboola\Google\ClientBundle\Google\RestApi;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
-use Keboola\GoogleSheetsWriter\Input\Factory;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Keboola\GoogleSheetsClient\Client;
-use Monolog\Handler\NullHandler;
+use Keboola\GoogleSheetsWriter\Logger\KbcInfoProcessor;
+use Keboola\GoogleSheetsWriter\Logger\Logger;
 use Pimple\Container;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
@@ -30,12 +30,8 @@ class Application
     {
         $container = new Container();
         $container['action'] = isset($config['action'])?$config['action']:'run';
-        $container['logger'] = function ($c) {
-            $logger = new Logger(APP_NAME);
-            if ($c['action'] !== 'run') {
-                $logger->setHandlers([new NullHandler(Logger::INFO)]);
-            }
-            return $logger;
+        $container['logger'] = function () use ($config) {
+            return (new Logger($config['app_name']))->pushProcessor(new KbcInfoProcessor());
         };
         $container['parameters'] = $this->validateParameters($config['parameters']);
         if (empty($config['authorization'])) {
