@@ -5,6 +5,9 @@ MAINTAINER Miroslav Cillik <miro@keboola.com>
 RUN apt-get update
 RUN apt-get install -y wget curl make git bzip2 time libzip-dev libssl1.0.0 openssl
 
+# PHP
+RUN docker-php-ext-install sockets
+
 # XDebug
 RUN pecl install xdebug-2.5.0 && docker-php-ext-enable xdebug
 
