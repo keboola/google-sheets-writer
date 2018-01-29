@@ -8,3 +8,4 @@ tests.sh
 run.sh
 CONFIGURATION.md
 .DS_Store
+.env

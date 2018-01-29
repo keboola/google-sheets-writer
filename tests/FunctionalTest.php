@@ -75,6 +75,49 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
+    public function testUpdateSpreadsheetDisabled()
+    {
+        $this->prepareDataFiles();
+
+        // create sheet
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'titanic',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+            ]
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $modified = $this->client->getFile($gdFile['id'], ['modifiedTime']);
+
+        $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
+
+        // update sheet
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'titanic',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => $sheetId,
+            'sheetTitle' => 'casualties',
+            'tableId' => 'titanic_2',
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'enabled' => false
+        ];
+
+        sleep(5);
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+
+        $modified2 = $this->client->getFile($gdFile['id'], ['createdTime', 'modifiedTime']);
+
+        $this->assertEquals($modified['modifiedTime'], $modified2['modifiedTime']);
+    }
+
     /**
      * Update large Spreadsheet
      */

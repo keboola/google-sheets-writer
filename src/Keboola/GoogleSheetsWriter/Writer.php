@@ -56,8 +56,10 @@ class Writer
     public function process(array $sheets)
     {
         foreach ($sheets as $sheetCfg) {
-            $sheetWriter = new Sheet($this->driveApi, $this->input->getTable($sheetCfg['tableId']));
-            $sheetWriter->process($sheetCfg);
+            if ($sheetCfg['enabled']) {
+                $sheetWriter = new Sheet($this->driveApi, $this->input->getTable($sheetCfg['tableId']));
+                $sheetWriter->process($sheetCfg);
+            }
         }
     }
 
