@@ -25,6 +25,7 @@ class BaseTest extends \PHPUnit_Framework_TestCase
         $api->setCredentials(getenv('ACCESS_TOKEN'), getenv('REFRESH_TOKEN'));
         $api->setBackoffsCount(2); // Speeds up the tests
         $this->client = new Client($api);
+        $this->client->setTeamDriveSupport(true);
     }
 
     protected function prepareConfig()
