@@ -3,8 +3,8 @@ services:
   app:
     build: .
     image: keboola/google-sheets-writer
-#    volumes:
-#      - .:/code
+    volumes:
+      - .:/code
     working_dir: /code
     tty: true
     stdin_open: true
