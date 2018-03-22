@@ -1,10 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 17/01/17
- * Time: 14:23
- */
+
+declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter;
 
@@ -29,7 +25,13 @@ class Sheet
         $this->inputTable = $inputTable;
     }
 
-    public function process($sheet)
+    /**
+     * @param array $sheet
+     * @throws UserException
+     * @throws ApplicationException
+     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
+     */
+    public function process(array $sheet) : void
     {
         try {
             // update sheets metadata (title, rows and cols count) first
@@ -42,12 +44,12 @@ class Sheet
 
                 $gridProperties = [
                     'columnCount' => $columnCount,
-                    'rowCount' => $rowCount
+                    'rowCount' => $rowCount,
                 ];
 
                 $this->updateSheetMetadata($sheet, [
                     'columnCount' => $columnCount,
-                    'rowCount' => ($columnCount < 3) ? $columnCount : 3
+                    'rowCount' => ($columnCount < 3) ? $columnCount : 3,
                 ]);
             }
 
@@ -59,19 +61,12 @@ class Sheet
             //@todo handle API exception
             throw new UserException($e->getMessage(), 0, $e, [
                 'response' => $e->getResponse()->getBody()->getContents(),
-                'reasonPhrase' => $e->getResponse()->getReasonPhrase()
+                'reasonPhrase' => $e->getResponse()->getReasonPhrase(),
             ]);
         }
     }
 
-    /**
-     * @param $sheetTitle
-     * @param $columnCount
-     * @param int $rowOffset
-     * @param int $rowLimit
-     * @return string
-     */
-    private function getRange($sheetTitle, $columnCount, $rowOffset = 1, $rowLimit = 1000)
+    private function getRange(string $sheetTitle, int $columnCount, int $rowOffset = 1, int $rowLimit = 1000) : string
     {
         $lastColumn = $this->getColumnA1($columnCount-1);
         $start = 'A' . $rowOffset;
@@ -80,11 +75,7 @@ class Sheet
         return urlencode($sheetTitle) . '!' . $start . ':' . $end;
     }
 
-    /**
-     * @param $columnNumber
-     * @return string
-     */
-    private function getColumnA1($columnNumber)
+    private function getColumnA1(int $columnNumber) : string
     {
         $alphas = range('A', 'Z');
 
@@ -99,7 +90,14 @@ class Sheet
         return $prefix . $alphas[$remainder];
     }
 
-    private function uploadValues($sheet, Table $inputTable)
+    /**
+     * @param array $sheet
+     * @param Table $inputTable
+     * @return array
+     * @throws ApplicationException
+     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
+     */
+    private function uploadValues(array $sheet, Table $inputTable) : array
     {
         // insert new values, 1000 rows at a time
         $responses = [];
@@ -149,7 +147,14 @@ class Sheet
         return $responses;
     }
 
-    private function updateValues($sheet, $values, $range)
+    /**
+     * @param array $sheet
+     * @param array $values
+     * @param string $range
+     * @return array
+     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
+     */
+    private function updateValues(array $sheet, array $values, string $range) : array
     {
         return $this->client->updateSpreadsheetValues(
             $sheet['fileId'],
@@ -158,9 +163,15 @@ class Sheet
         );
     }
 
-    private function appendValues($sheet, $values)
+    /**
+     * @param array $sheet
+     * @param array $values
+     * @return array
+     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
+     */
+    private function appendValues(array $sheet, array $values) : array
     {
-        $responses[] = $this->client->appendSpreadsheetValues(
+        return $this->client->appendSpreadsheetValues(
             $sheet['fileId'],
             $sheet['sheetTitle'],
             $values
@@ -170,15 +181,16 @@ class Sheet
     /**
      * Update sheets metadata - title, columnCount, rowCount
      *
-     * @param $sheet
-     * @param $gridProperties
+     * @param array $sheet
+     * @param array $gridProperties
      *      [
      *          'rowCount' => NUMBER OF ROWS
      *          'columnCount' => NUMBER OF COLUMNS
      *      ]
-     * @return mixed
+     * @return array
+     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
      */
-    private function updateSheetMetadata($sheet, $gridProperties = [])
+    private function updateSheetMetadata(array $sheet, array $gridProperties = []) : array
     {
         // update sheets properties - title and gridProperties
         $request = [
@@ -187,8 +199,8 @@ class Sheet
                     'sheetId' => $sheet['sheetId'],
                     'title' => $sheet['sheetTitle'],
                 ],
-                'fields' => 'title'
-            ]
+                'fields' => 'title',
+            ],
         ];
 
         if (!empty($gridProperties)) {
@@ -197,7 +209,7 @@ class Sheet
         }
 
         return $this->client->batchUpdateSpreadsheet($sheet['fileId'], [
-            'requests' => [$request]
+            'requests' => [$request],
         ]);
     }
 }

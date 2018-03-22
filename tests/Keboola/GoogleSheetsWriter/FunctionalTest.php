@@ -1,11 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 10/08/16
- * Time: 16:45
- */
-namespace Keboola\GoogleSheetsWriter\Tests;
+
+declare(strict_types=1);
+
+namespace Keboola\GoogleSheetsWriter;
 
 use Keboola\Csv\CsvFile;
 use Keboola\GoogleSheetsClient\Client;
@@ -16,9 +13,10 @@ use Symfony\Component\Process\Process;
 
 class FunctionalTest extends BaseTest
 {
+    /** @var string */
     private $tmpDataPath = '/tmp/data-test';
 
-    public function setUp()
+    public function setUp() : void
     {
         parent::setUp();
         $testFiles = $this->client->listFiles("name contains 'titanic' and trashed != true");
@@ -30,7 +28,7 @@ class FunctionalTest extends BaseTest
     /**
      * Create or update a sheet
      */
-    public function testUpdateSpreadsheet()
+    public function testUpdateSpreadsheet() : void
     {
         $this->prepareDataFiles();
 
@@ -40,7 +38,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -58,11 +56,12 @@ class FunctionalTest extends BaseTest
             'sheetTitle' => 'casualties',
             'tableId' => 'titanic_2',
             'action' => ConfigDefinition::ACTION_UPDATE,
-            'enabled' => true
+            'enabled' => true,
         ];
 
         $process = $this->runProcess($config);
-        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
+
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
         $response = $this->client->getSpreadsheet($gdFile['id']);
         $values = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
@@ -75,7 +74,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testUpdateSpreadsheetInTeamDrive()
+    public function testUpdateSpreadsheetInTeamDrive() : void
     {
         $this->prepareDataFiles();
 
@@ -85,7 +84,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_TEAM_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -103,7 +102,7 @@ class FunctionalTest extends BaseTest
             'sheetTitle' => 'casualties',
             'tableId' => 'titanic_2',
             'action' => ConfigDefinition::ACTION_UPDATE,
-            'enabled' => true
+            'enabled' => true,
         ];
 
         $process = $this->runProcess($config);
@@ -120,7 +119,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testUpdateSpreadsheetDisabled()
+    public function testUpdateSpreadsheetDisabled() : void
     {
         $this->prepareDataFiles();
 
@@ -130,7 +129,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -150,7 +149,7 @@ class FunctionalTest extends BaseTest
             'sheetTitle' => 'casualties',
             'tableId' => 'titanic_2',
             'action' => ConfigDefinition::ACTION_UPDATE,
-            'enabled' => false
+            'enabled' => false,
         ];
 
         sleep(5);
@@ -166,7 +165,7 @@ class FunctionalTest extends BaseTest
     /**
      * Update large Spreadsheet
      */
-    public function testUpdateSpreadsheetLarge()
+    public function testUpdateSpreadsheetLarge() : void
     {
         $this->prepareDataFiles();
 
@@ -176,7 +175,7 @@ class FunctionalTest extends BaseTest
             'titanic_1',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -204,7 +203,7 @@ class FunctionalTest extends BaseTest
             'sheetTitle' => $newSheetTitle,
             'tableId' => 'large',
             'action' => ConfigDefinition::ACTION_UPDATE,
-            'enabled' => true
+            'enabled' => true,
         ];
 
         $process = $this->runProcess($config);
@@ -216,7 +215,7 @@ class FunctionalTest extends BaseTest
             $gdFile['id'],
             urlencode($newSheetTitle),
             [
-                'valueRenderOption' => 'UNFORMATTED_VALUE'
+                'valueRenderOption' => 'UNFORMATTED_VALUE',
             ]
         );
 
@@ -231,7 +230,7 @@ class FunctionalTest extends BaseTest
     /**
      * Append content to a sheet
      */
-    public function testAppendSheet()
+    public function testAppendSheet() : void
     {
         $this->prepareDataFiles();
 
@@ -241,7 +240,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -259,7 +258,7 @@ class FunctionalTest extends BaseTest
             'sheetTitle' => 'casualties',
             'tableId' => 'titanic_2_append',
             'action' => ConfigDefinition::ACTION_APPEND,
-            'enabled' => true
+            'enabled' => true,
         ];
 
         $process = $this->runProcess($config);
@@ -276,7 +275,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testAppendSheetLarge()
+    public function testAppendSheetLarge() : void
     {
         $this->prepareDataFiles();
 
@@ -285,7 +284,7 @@ class FunctionalTest extends BaseTest
             'titanic_1',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -313,7 +312,7 @@ class FunctionalTest extends BaseTest
             'sheetTitle' => $newSheetTitle,
             'tableId' => 'large-append',
             'action' => ConfigDefinition::ACTION_APPEND,
-            'enabled' => true
+            'enabled' => true,
         ];
 
         $process = $this->runProcess($config);
@@ -332,7 +331,7 @@ class FunctionalTest extends BaseTest
         $this->assertCount(3001, $response['values']);
     }
 
-    public function testAppendToEmptySheet()
+    public function testAppendToEmptySheet() : void
     {
         $this->prepareDataFiles();
 
@@ -341,7 +340,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -359,7 +358,7 @@ class FunctionalTest extends BaseTest
             'sheetTitle' => 'casualties',
             'tableId' => 'titanic_2_append',
             'action' => ConfigDefinition::ACTION_APPEND,
-            'enabled' => true
+            'enabled' => true,
         ];
 
         $process = $this->runProcess($config);
@@ -374,7 +373,7 @@ class FunctionalTest extends BaseTest
     /**
      * Create New Spreadsheet using sync action
      */
-    public function testSyncActionCreateSpreadsheet()
+    public function testSyncActionCreateSpreadsheet() : void
     {
         $this->prepareDataFiles();
 
@@ -385,7 +384,7 @@ class FunctionalTest extends BaseTest
             'title' => 'titanic',
             'enabled' => true,
             'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
-            'action' => ConfigDefinition::ACTION_UPDATE
+            'action' => ConfigDefinition::ACTION_UPDATE,
         ];
 
         $process = $this->runProcess($config);
@@ -401,7 +400,7 @@ class FunctionalTest extends BaseTest
     /**
      * Add Sheet to a Spreadsheet using sync action
      */
-    public function testSyncActionAddSheet()
+    public function testSyncActionAddSheet() : void
     {
         $this->prepareDataFiles();
 
@@ -411,7 +410,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -424,7 +423,7 @@ class FunctionalTest extends BaseTest
             'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetTitle' => 'Sheet2',
             'enabled' => true,
-            'action' => ConfigDefinition::ACTION_UPDATE
+            'action' => ConfigDefinition::ACTION_UPDATE,
         ];
 
         $process = $this->runProcess($config);
@@ -445,7 +444,7 @@ class FunctionalTest extends BaseTest
      * Add Sheet with same title to a Spreadsheet using sync action
      * This will return the existing sheet resource
      */
-    public function testSyncActionAddSheetExisting()
+    public function testSyncActionAddSheetExisting() : void
     {
         $this->prepareDataFiles();
 
@@ -456,7 +455,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -469,7 +468,7 @@ class FunctionalTest extends BaseTest
             'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetTitle' => $sheetTitle,
             'enabled' => true,
-            'action' => ConfigDefinition::ACTION_UPDATE
+            'action' => ConfigDefinition::ACTION_UPDATE,
         ];
 
         $process = $this->runProcess($config);
@@ -486,7 +485,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testSyncActionDeleteSheet()
+    public function testSyncActionDeleteSheet() : void
     {
         $this->prepareDataFiles();
 
@@ -496,7 +495,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -505,8 +504,8 @@ class FunctionalTest extends BaseTest
             $gdFile['id'],
             [
                 'properties' => [
-                    'title' => 'Sheet2'
-                ]
+                    'title' => 'Sheet2',
+                ],
             ]
         );
 
@@ -521,7 +520,7 @@ class FunctionalTest extends BaseTest
             'fileId' => $gdFile['id'],
             'title' => 'titanic',
             'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
-            'sheetId' => $sheet2Id
+            'sheetId' => $sheet2Id,
         ];
 
         $process = $this->runProcess($config);
@@ -538,7 +537,7 @@ class FunctionalTest extends BaseTest
     /**
      * Create New Spreadsheet using sync action
      */
-    public function testSyncActionGetSpreadsheet()
+    public function testSyncActionGetSpreadsheet() : void
     {
         $this->prepareDataFiles();
 
@@ -548,7 +547,7 @@ class FunctionalTest extends BaseTest
             'titanic',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
-                'mimeType' => Client::MIME_TYPE_SPREADSHEET
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ]
         );
 
@@ -560,7 +559,7 @@ class FunctionalTest extends BaseTest
             'fileId' => $gdFile['id'],
             'enabled' => true,
             'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
-            'action' => ConfigDefinition::ACTION_UPDATE
+            'action' => ConfigDefinition::ACTION_UPDATE,
         ];
 
         $process = $this->runProcess($config);
@@ -572,10 +571,10 @@ class FunctionalTest extends BaseTest
     }
 
     /**
-     * @param $config
+     * @param array $config
      * @return Process
      */
-    private function runProcess($config)
+    private function runProcess(array $config) : Process
     {
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
 
@@ -586,7 +585,7 @@ class FunctionalTest extends BaseTest
         return $process;
     }
 
-    private function prepareDataFiles()
+    private function prepareDataFiles() : void
     {
         $fs = new Filesystem();
         $fs->remove($this->tmpDataPath);

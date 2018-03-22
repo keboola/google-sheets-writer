@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Keboola\GoogleSheetsWriter\Application;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
@@ -7,6 +9,7 @@ use Keboola\GoogleSheetsWriter\Logger\Logger;
 
 require_once(dirname(__FILE__) . "/bootstrap.php");
 
+const APP_NAME = 'wr-google-drive';
 $logger = new Logger(APP_NAME);
 
 try {
@@ -30,7 +33,7 @@ try {
         echo json_encode([
             'status' => 'error',
             'error' => 'User Error',
-            'message' => $e->getMessage()
+            'message' => $e->getMessage(),
         ]);
     } else {
         $logger->log('error', $e->getMessage(), (array) $e->getData());
@@ -39,11 +42,11 @@ try {
 } catch (ApplicationException $e) {
     $logger->log('error', $e->getMessage(), (array) $e->getData());
     exit(2);
-} catch (\Exception $e) {
+} catch (\Throwable $e) {
     $logger->log('error', $e->getMessage(), [
         'errFile' => $e->getFile(),
         'errLine' => $e->getLine(),
-        'trace' => $e->getTrace()
+        'trace' => $e->getTrace(),
     ]);
     exit(2);
 }

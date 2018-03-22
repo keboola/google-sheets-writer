@@ -1,10 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 10/08/16
- * Time: 15:50
- */
+
+declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Configuration;
 
@@ -13,16 +9,16 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class ConfigDefinition implements ConfigurationInterface
 {
-    const ACTION_CREATE = 'create';
-    const ACTION_UPDATE = 'update';
-    const ACTION_APPEND = 'append';
+    public const ACTION_CREATE = 'create';
+    public const ACTION_UPDATE = 'update';
+    public const ACTION_APPEND = 'append';
 
     /**
      * Generates the configuration tree builder.
      *
      * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder The tree builder
      */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): \Symfony\Component\Config\Definition\Builder\TreeBuilder
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('parameters');
@@ -35,7 +31,7 @@ class ConfigDefinition implements ConfigurationInterface
                 ->end()
                 ->arrayNode('tables')
                     ->isRequired()
-                    ->prototype('array')
+                    ->arrayPrototype('array')
                         ->children()
                             ->integerNode('id')
                                 ->isRequired()

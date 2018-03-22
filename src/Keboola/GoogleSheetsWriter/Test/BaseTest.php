@@ -1,25 +1,23 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 10/08/16
- * Time: 16:49
- */
+
+declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Test;
 
 use Keboola\Csv\CsvFile;
 use Keboola\Google\ClientBundle\Google\RestApi;
 use Keboola\GoogleSheetsClient\Client;
+use PHPUnit\Framework\TestCase;
 
-class BaseTest extends \PHPUnit_Framework_TestCase
+class BaseTest extends TestCase
 {
-    protected $dataPath = ROOT_PATH . '/tests/data';
+    /** @var string */
+    protected $dataPath = __DIR__ . '/../../../../tests/data';
 
     /** @var Client */
     protected $client;
 
-    public function setUp()
+    public function setUp(): void
     {
         $api = new RestApi(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
         $api->setCredentials(getenv('ACCESS_TOKEN'), getenv('REFRESH_TOKEN'));
@@ -28,7 +26,7 @@ class BaseTest extends \PHPUnit_Framework_TestCase
         $this->client->setTeamDriveSupport(true);
     }
 
-    protected function prepareConfig()
+    protected function prepareConfig() : array
     {
         $config['parameters']['data_dir'] = $this->dataPath;
         $config['authorization']['oauth_api']['credentials'] = [
@@ -36,14 +34,14 @@ class BaseTest extends \PHPUnit_Framework_TestCase
             '#appSecret' => getenv('CLIENT_SECRET'),
             '#data' => json_encode([
                 'access_token' => getenv('ACCESS_TOKEN'),
-                'refresh_token' => getenv('REFRESH_TOKEN')
-            ])
+                'refresh_token' => getenv('REFRESH_TOKEN'),
+            ]),
         ];
 
         return $config;
     }
 
-    protected function csvToArray($pathname)
+    protected function csvToArray(string $pathname) : array
     {
         $values = [];
         $csvFile = new CsvFile($pathname);
@@ -54,9 +52,5 @@ class BaseTest extends \PHPUnit_Framework_TestCase
         }
 
         return $values;
-    }
-
-    public function tearDown()
-    {
     }
 }

@@ -1,11 +1,6 @@
 <?php
 
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 10/12/15
- * Time: 12:45
- */
+declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Logger;
 
@@ -14,7 +9,7 @@ use Monolog\Handler\SyslogUdpHandler;
 
 class Logger extends \Monolog\Logger
 {
-    public function __construct($name = '')
+    public function __construct(string $name = '')
     {
         $debugHandler = new SyslogUdpHandler("logs6.papertrailapp.com", 40897);
         $debugHandler->setFormatter(new LineFormatter());

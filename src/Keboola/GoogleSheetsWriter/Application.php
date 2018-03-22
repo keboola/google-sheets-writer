@@ -1,11 +1,6 @@
 <?php
 
-/**
- * Created by PhpStorm.
- * User: miroslavcillik
- * Date: 10/08/16
- * Time: 15:45
- */
+declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter;
 
@@ -24,9 +19,10 @@ use Symfony\Component\Config\Definition\Processor;
 
 class Application
 {
+    /** @var Container */
     private $container;
 
-    public function __construct($config)
+    public function __construct(array $config)
     {
         $container = new Container();
         $container['action'] = isset($config['action'])?$config['action']:'run';
@@ -66,7 +62,7 @@ class Application
         $this->container = $container;
     }
 
-    public function run()
+    public function run() : array
     {
         $actionMethod = $this->container['action'] . 'Action';
         if (!method_exists($this, $actionMethod)) {
@@ -93,23 +89,23 @@ class Application
                 throw new UserException("Google API error: " . $e->getMessage(), $e->getCode(), $e);
             }
             throw new ApplicationException($e->getMessage(), 500, $e, [
-                'response' => $e->getResponse()->getBody()->getContents()
+                'response' => $e->getResponse()->getBody()->getContents(),
             ]);
         }
     }
 
-    protected function runAction()
+    protected function runAction() : array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
         $writer->process($this->container['parameters']['tables']);
 
         return [
-            'status' => 'ok'
+            'status' => 'ok',
         ];
     }
 
-    protected function getSpreadsheetAction()
+    protected function getSpreadsheetAction() : array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -117,11 +113,11 @@ class Application
 
         return [
             'status' => 'ok',
-            'spreadsheet' => $res
+            'spreadsheet' => $res,
         ];
     }
 
-    protected function createSpreadsheetAction()
+    protected function createSpreadsheetAction() : array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -129,11 +125,11 @@ class Application
 
         return [
             'status' => 'ok',
-            'spreadsheet' => $res
+            'spreadsheet' => $res,
         ];
     }
 
-    protected function addSheetAction()
+    protected function addSheetAction() : array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -141,22 +137,22 @@ class Application
 
         return [
             'status' => 'ok',
-            'sheet' => $res
+            'sheet' => $res,
         ];
     }
 
-    protected function deleteSheetAction()
+    protected function deleteSheetAction() : array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
         $writer->deleteSheet($this->container['parameters']['tables'][0]);
 
         return [
-            'status' => 'ok'
+            'status' => 'ok',
         ];
     }
 
-    private function validateParameters($parameters)
+    private function validateParameters(array $parameters) : array
     {
         try {
             $processor = new Processor();
