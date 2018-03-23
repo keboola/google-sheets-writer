@@ -35,27 +35,33 @@ class Application
         }
         $tokenData = json_decode($config['authorization']['oauth_api']['credentials']['#data'], true);
         $container['google_client'] = function ($container) use ($config, $tokenData) {
-            return new RestApi(
+            $retries = 7;
+            if ($container['action'] !== 'run') {
+                $retries = 2;
+            }
+            $api = new RestApi(
                 $config['authorization']['oauth_api']['credentials']['appKey'],
                 $config['authorization']['oauth_api']['credentials']['#appSecret'],
                 $tokenData['access_token'],
                 $tokenData['refresh_token'],
                 $container['logger']
             );
+            $api->setBackoffsCount($retries);
+            return $api;
         };
-        $container['google_sheets_client'] = function ($c) {
-            $client = new Client($c['google_client']);
+        $container['google_sheets_client'] = function ($container) {
+            $client = new Client($container['google_client']);
             $client->setTeamDriveSupport(true);
             return $client;
         };
-        $container['input'] = function ($c) {
-            return new TableFactory($c['parameters']['data_dir']);
+        $container['input'] = function ($container) {
+            return new TableFactory($container['parameters']['data_dir']);
         };
-        $container['writer'] = function ($c) {
+        $container['writer'] = function ($container) {
             return new Writer(
-                $c['google_sheets_client'],
-                $c['input'],
-                $c['logger']
+                $container['google_sheets_client'],
+                $container['input'],
+                $container['logger']
             );
         };
 
