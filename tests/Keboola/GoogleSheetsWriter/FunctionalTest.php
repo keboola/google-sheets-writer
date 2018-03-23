@@ -208,7 +208,7 @@ class FunctionalTest extends BaseTest
 
         $process = $this->runProcess($config);
 
-        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+        $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
 
         $response = $this->client->getSpreadsheet($gdFile['id']);
         $values = $this->client->getSpreadsheetValues(

@@ -34,28 +34,12 @@ class Sheet
     public function process(array $sheet) : void
     {
         try {
-            // update sheets metadata (title, rows and cols count) first
-            // workaround for bug in API, update columns first and then both
-            // rowCount is set to 3 to avoid "frozen headers"
-            $gridProperties = [];
+            $this->updateMetadata($sheet);
+
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
-                $rowCount = $this->inputTable->getRowCount();
-                $columnCount = $this->inputTable->getColumnCount();
-
-                $gridProperties = [
-                    'columnCount' => $columnCount,
-                    'rowCount' => $rowCount,
-                ];
-
-                $this->updateSheetMetadata($sheet, [
-                    'columnCount' => $columnCount,
-                    'rowCount' => ($columnCount < 3) ? $columnCount : 3,
-                ]);
+                $this->client->clearSpreadsheetValues($sheet['fileId'], $sheet['sheetTitle']);
             }
 
-            $this->updateSheetMetadata($sheet, $gridProperties);
-
-            // upload data
             $this->uploadValues($sheet, $this->inputTable);
         } catch (ClientException $e) {
             //@todo handle API exception
@@ -121,6 +105,14 @@ class Sheet
                         $offset,
                         $limit
                     );
+
+                    // increase grid size of the sheet
+                    $gridProperties = [
+                        'columnCount' => $inputTable->getColumnCount(),
+                        'rowCount' => $offset + $limit - 1,
+                    ];
+                    $this->updateMetadata($sheet, $gridProperties);
+
                     $responses[] = $this->updateValues($sheet, $values, $range);
                     break;
                 case ConfigDefinition::ACTION_APPEND:
@@ -190,7 +182,7 @@ class Sheet
      * @return array
      * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
      */
-    private function updateSheetMetadata(array $sheet, array $gridProperties = []) : array
+    private function updateMetadata(array $sheet, array $gridProperties = []) : array
     {
         // update sheets properties - title and gridProperties
         $request = [
