@@ -64,7 +64,7 @@ class FunctionalTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
         $response = $this->client->getSpreadsheet($gdFile['id']);
-        $values = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
+        $values = $this->client->getSpreadsheetValues($gdFile['id'], urlencode('casualties 1+'));
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
         $this->assertEquals('Titanic 1 +', $response['properties']['title']);
