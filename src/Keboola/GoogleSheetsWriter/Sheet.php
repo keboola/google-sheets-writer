@@ -37,7 +37,7 @@ class Sheet
             $this->updateMetadata($sheet);
 
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
-                $this->client->clearSpreadsheetValues($sheet['fileId'], $sheet['sheetTitle']);
+                $this->client->clearSpreadsheetValues($sheet['fileId'], urlencode($sheet['sheetTitle']));
             }
 
             $this->uploadValues($sheet, $this->inputTable);

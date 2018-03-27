@@ -35,7 +35,7 @@ class FunctionalTest extends BaseTest
         // create sheet
         $gdFile = $this->client->createFile(
             $this->dataPath . '/in/tables/titanic_1.csv',
-            'titanic',
+            'Titanic 1 +',
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
@@ -50,10 +50,10 @@ class FunctionalTest extends BaseTest
         $config['parameters']['tables'][] = [
             'id' => 0,
             'fileId' => $gdFile['id'],
-            'title' => 'titanic',
+            'title' => 'Titanic 1 +',
             'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
             'sheetId' => $sheetId,
-            'sheetTitle' => 'casualties',
+            'sheetTitle' => 'casualties 1+',
             'tableId' => 'titanic_2',
             'action' => ConfigDefinition::ACTION_UPDATE,
             'enabled' => true,
@@ -67,8 +67,8 @@ class FunctionalTest extends BaseTest
         $values = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
-        $this->assertEquals('titanic', $response['properties']['title']);
-        $this->assertEquals('casualties', $response['sheets'][0]['properties']['title']);
+        $this->assertEquals('Titanic 1 +', $response['properties']['title']);
+        $this->assertEquals('casualties 1+', $response['sheets'][0]['properties']['title']);
         $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
 
         $this->client->deleteFile($gdFile['id']);
