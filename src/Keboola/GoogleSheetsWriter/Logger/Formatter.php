@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\GoogleSheetsWriter\Logger;
 
 use Keboola\Csv\CsvFile;
+use Monolog\Formatter\GelfMessageFormatter;
 
-class LineFormatter extends \Monolog\Formatter\LineFormatter
+class Formatter extends GelfMessageFormatter
 {
     /**
      * @param CsvFile $data

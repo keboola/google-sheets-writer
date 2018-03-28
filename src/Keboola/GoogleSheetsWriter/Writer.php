@@ -52,6 +52,12 @@ class Writer
     {
         foreach ($sheets as $sheetCfg) {
             if ($sheetCfg['enabled']) {
+                $this->logger->info(sprintf(
+                    'Processing sheet "%s" in file "%s"',
+                    $sheetCfg['sheetTitle'],
+                    $sheetCfg['title']
+                ));
+
                 $sheetWriter = new Sheet($this->driveApi, $this->input->getTable($sheetCfg['tableId']));
                 $sheetWriter->process($sheetCfg);
             }

@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Logger;
 
-use Monolog\Handler\StreamHandler;
-use Monolog\Handler\SyslogUdpHandler;
+use Gelf\Publisher;
+use Gelf\Transport\TcpTransport;
+use Monolog\Handler\GelfHandler;
 
 class Logger extends \Monolog\Logger
 {
     public function __construct(string $name = '')
     {
-        $debugHandler = new SyslogUdpHandler("logs6.papertrailapp.com", 40897);
-        $debugHandler->setFormatter(new LineFormatter());
+        $transport = new TcpTransport(getenv('KBC_LOGGER_ADDR'), getenv('KBC_LOGGER_PORT'));
+        $gelfHandler = new GelfHandler(new Publisher($transport));
+        $gelfHandler->setFormatter(new Formatter());
 
-        $errHandler = new StreamHandler('php://stderr', Logger::NOTICE, false);
-
-        $infoHandler = new StreamHandler('php://stdout', Logger::INFO, false);
-        $infoHandler->setFormatter(new LineFormatter("%message%\n"));
-
-        parent::__construct($name, [$debugHandler, $errHandler, $infoHandler]);
+        parent::__construct($name, [$gelfHandler]);
     }
 }
