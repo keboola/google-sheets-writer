@@ -5,13 +5,25 @@ declare(strict_types=1);
 use Keboola\GoogleSheetsWriter\Application;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
-use Keboola\GoogleSheetsWriter\Logger\Logger;
+use Keboola\GoogleSheetsWriter\Logger\HandlerFactory;
+use Monolog\Logger;
 
 require_once(dirname(__FILE__) . "/bootstrap.php");
 
 const APP_NAME = 'wr-google-drive';
-$logger = new Logger(APP_NAME);
+// initialize logger
+$logger = new Logger(APP_NAME, HandlerFactory::getGelfHandlers());
+try {
+    // verify that logger is functional
+    $logger->debug("Starting up");
+} catch (\Throwable $e) {
+    // fallback to stderr logger
+    $logger->setHandlers(HandlerFactory::getStderrHandlers());
+    $logger->debug("Starting up");
+    $logger->error($e->getMessage(), ['exception' => $e]);
+}
 
+// initialize application
 try {
     $arguments = getopt("d::", ["data::"]);
     if (!isset($arguments["data"])) {
@@ -21,7 +33,7 @@ try {
     $config['parameters']['data_dir'] = $arguments['data'];
     $config['app_name'] = APP_NAME;
 
-    $app = new Application($config);
+    $app = new Application($config, $logger);
     $result = $app->run();
 
     if (isset($config['action'])) {

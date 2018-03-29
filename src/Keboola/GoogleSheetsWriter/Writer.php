@@ -6,7 +6,7 @@ namespace Keboola\GoogleSheetsWriter;
 
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Keboola\GoogleSheetsClient\Client;
-use Keboola\GoogleSheetsWriter\Logger\Logger;
+use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 
 class Writer
