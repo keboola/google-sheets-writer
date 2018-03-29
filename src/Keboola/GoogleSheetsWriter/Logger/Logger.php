@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Logger;
 
+use Gelf\MessageValidator;
 use Gelf\Publisher;
 use Gelf\Transport\TcpTransport;
 use Monolog\Handler\GelfHandler;
@@ -21,7 +22,7 @@ class Logger extends \Monolog\Logger
         // use GELF logger if Gelf server is available
         if (getenv('KBC_LOGGER_ADDR') !== false) {
             $transport = new TcpTransport(getenv('KBC_LOGGER_ADDR'), getenv('KBC_LOGGER_PORT'));
-            $gelfHandler = new GelfHandler(new Publisher($transport));
+            $gelfHandler = new GelfHandler(new Publisher($transport, new MessageValidator()));
             $gelfHandler->setFormatter(new GelfFormatter());
             return [$gelfHandler];
         }
