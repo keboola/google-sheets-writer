@@ -16,3 +16,14 @@ services:
       REFRESH_TOKEN: ${REFRESH_TOKEN}
       GOOGLE_DRIVE_FOLDER: ${GOOGLE_DRIVE_FOLDER}
       GOOGLE_DRIVE_TEAM_FOLDER: ${GOOGLE_DRIVE_TEAM_FOLDER}
+      KBC_LOGGER_ADDR: log-server
+      KBC_LOGGER_PORT: 12202
+    links:
+      - log-server
+
+  log-server:
+    image: "quay.io/keboola/docs-example-logging-mock-server:master"
+    ports:
+      - 12202:12202/tcp
+    environment:
+      SERVER_TYPE: tcp
