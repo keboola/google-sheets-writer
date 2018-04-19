@@ -10,6 +10,7 @@ use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
 use Keboola\GoogleSheetsWriter\Input\Table;
 use Keboola\GoogleSheetsClient\Client;
+use Monolog\Logger;
 
 class Sheet
 {
@@ -19,10 +20,14 @@ class Sheet
     /** @var Table */
     private $inputTable;
 
-    public function __construct(Client $client, Table $inputTable)
+    /** @var Logger */
+    private $logger;
+
+    public function __construct(Client $client, Table $inputTable, Logger $logger)
     {
         $this->client = $client;
         $this->inputTable = $inputTable;
+        $this->logger = $logger;
     }
 
     /**
@@ -34,26 +39,21 @@ class Sheet
     public function process(array $sheet) : void
     {
         try {
-            // update sheets metadata (title, rows and cols count) first
-            // workaround for bug in API, update columns first and then both
-            // rowCount is set to 3 to avoid "frozen headers"
-            $gridProperties = [];
+            // Update sheets title and grid properties.
+            // This will adjust the column count to the size of the uploaded table,
+            // so the limit of 2M cells can be used efficiently.
+            $spreadsheet = $this->client->getSpreadsheet($sheet['fileId']);
+            $sheetProperties = $this->findSheetPropertiesById($spreadsheet['sheets'], $sheet['sheetId']);
+            $gridProperties = [
+                'columnCount' => $this->inputTable->getColumnCount(),
+                'rowCount' => $sheetProperties['properties']['gridProperties']['rowCount'],
+            ];
+
+            $this->updateMetadata($sheet, $gridProperties);
+
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
-                $rowCount = $this->inputTable->getRowCount();
-                $columnCount = $this->inputTable->getColumnCount();
-
-                $gridProperties = [
-                    'columnCount' => $columnCount,
-                    'rowCount' => $rowCount,
-                ];
-
-                $this->updateSheetMetadata($sheet, [
-                    'columnCount' => $columnCount,
-                    'rowCount' => ($columnCount < 3) ? $columnCount : 3,
-                ]);
+                $this->client->clearSpreadsheetValues($sheet['fileId'], urlencode($sheet['sheetTitle']));
             }
-
-            $this->updateSheetMetadata($sheet, $gridProperties);
 
             // upload data
             $this->uploadValues($sheet, $this->inputTable);
@@ -66,30 +66,6 @@ class Sheet
         }
     }
 
-    private function getRange(string $sheetTitle, int $columnCount, int $rowOffset = 1, int $rowLimit = 1000) : string
-    {
-        $lastColumn = $this->getColumnA1($columnCount-1);
-        $start = 'A' . $rowOffset;
-        $end = $lastColumn . ($rowOffset + $rowLimit - 1);
-
-        return urlencode($sheetTitle) . '!' . $start . ':' . $end;
-    }
-
-    private function getColumnA1(int $columnNumber) : string
-    {
-        $alphas = range('A', 'Z');
-
-        $prefix = '';
-        if ($columnNumber > 25) {
-            $quotient = intval(floor($columnNumber/26));
-            $prefix = $alphas[$quotient-1];
-        }
-
-        $remainder = $columnNumber%26;
-
-        return $prefix . $alphas[$remainder];
-    }
-
     /**
      * @param array $sheet
      * @param Table $inputTable
@@ -99,10 +75,12 @@ class Sheet
      */
     private function uploadValues(array $sheet, Table $inputTable) : array
     {
+        $this->logger->debug("Uploading values", ['sheet' => $sheet]);
+
         // insert new values, 1000 rows at a time
         $responses = [];
         $offset = 1;
-        $limit = 1000;
+        $limit = 5000;
         $csvFile = $inputTable->getCsvFile();
         while ($csvFile->current()) {
             $i = 0;
@@ -115,13 +93,7 @@ class Sheet
 
             switch ($sheet['action']) {
                 case ConfigDefinition::ACTION_UPDATE:
-                    $range = $this->getRange(
-                        $sheet['sheetTitle'],
-                        $inputTable->getColumnCount(),
-                        $offset,
-                        $limit
-                    );
-                    $responses[] = $this->updateValues($sheet, $values, $range);
+                    $responses[] = $this->appendValues($sheet, $values);
                     break;
                 case ConfigDefinition::ACTION_APPEND:
                     // if sheet already contains header, strip header from values to be uploaded
@@ -150,22 +122,6 @@ class Sheet
     /**
      * @param array $sheet
      * @param array $values
-     * @param string $range
-     * @return array
-     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
-     */
-    private function updateValues(array $sheet, array $values, string $range) : array
-    {
-        return $this->client->updateSpreadsheetValues(
-            $sheet['fileId'],
-            $range,
-            $values
-        );
-    }
-
-    /**
-     * @param array $sheet
-     * @param array $values
      * @return array
      * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
      */
@@ -173,7 +129,7 @@ class Sheet
     {
         return $this->client->appendSpreadsheetValues(
             $sheet['fileId'],
-            $sheet['sheetTitle'],
+            urlencode($sheet['sheetTitle']),
             $values
         );
     }
@@ -190,9 +146,8 @@ class Sheet
      * @return array
      * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
      */
-    private function updateSheetMetadata(array $sheet, array $gridProperties = []) : array
+    private function updateMetadata(array $sheet, array $gridProperties = []) : array
     {
-        // update sheets properties - title and gridProperties
         $request = [
             'updateSheetProperties' => [
                 'properties' => [
@@ -211,5 +166,13 @@ class Sheet
         return $this->client->batchUpdateSpreadsheet($sheet['fileId'], [
             'requests' => [$request],
         ]);
+    }
+
+    private function findSheetPropertiesById(array $sheets, int $sheetId) : array
+    {
+        $results = array_filter($sheets, function ($item) use ($sheetId) {
+            return $item['properties']['sheetId'] === $sheetId;
+        });
+        return array_shift($results);
     }
 }

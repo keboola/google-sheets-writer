@@ -58,7 +58,11 @@ class Writer
                     $sheetCfg['title']
                 ));
 
-                $sheetWriter = new Sheet($this->driveApi, $this->input->getTable($sheetCfg['tableId']));
+                $sheetWriter = new Sheet(
+                    $this->driveApi,
+                    $this->input->getTable($sheetCfg['tableId']),
+                    $this->logger
+                );
                 $sheetWriter->process($sheetCfg);
             }
         }
