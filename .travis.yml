@@ -6,10 +6,10 @@ services:
   - docker
 
 install:
-  - docker-compose build app
+  - docker-compose build tests
 
 script:
-  - docker-compose run --rm app
+  - docker-compose run --rm tests
 
 after_success:
   - docker images

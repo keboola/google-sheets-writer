@@ -165,7 +165,7 @@ class FunctionalTest extends BaseTest
     /**
      * Update large Spreadsheet
      */
-    public function testUpdateSpreadsheetLarge() : void
+    public function testUpdateSpreadsheetLong() : void
     {
         $this->prepareDataFiles();
 
@@ -186,9 +186,98 @@ class FunctionalTest extends BaseTest
         $inputCsvPath = $this->tmpDataPath . '/in/tables/large.csv';
         touch($inputCsvPath);
         $inputCsv = new CsvFile($inputCsvPath);
-        $inputCsv->writeRow(['id', 'random_string']);
+        $inputCsv->writeRow(['id', 'random']);
         for ($i = 0; $i < 80000; $i++) {
             $inputCsv->writeRow([$i, uniqid()]);
+        }
+
+        // update sheet
+        $newSheetTitle = 'Long John Silver';
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'pirates',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => $sheetId,
+            'sheetTitle' => $newSheetTitle,
+            'tableId' => 'large',
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'enabled' => true,
+        ];
+
+        $process = $this->runProcess($config);
+
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $response = $this->client->getSpreadsheet($gdFile['id']);
+        $values = $this->client->getSpreadsheetValues(
+            $gdFile['id'],
+            urlencode($newSheetTitle),
+            [
+                'valueRenderOption' => 'UNFORMATTED_VALUE',
+            ]
+        );
+
+        $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
+        $this->assertEquals('titanic_1', $response['properties']['title']);
+        $this->assertEquals($newSheetTitle, $response['sheets'][0]['properties']['title']);
+        $this->assertEquals($this->csvToArray($inputCsvPath), $values['values']);
+
+        $this->client->deleteFile($gdFile['id']);
+    }
+
+    public function testUpdateSpreadsheetWide() : void
+    {
+        $this->prepareDataFiles();
+
+        // create sheet
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'titanic_1',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ]
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
+
+        // create large file
+        $inputCsvPath = $this->tmpDataPath . '/in/tables/large.csv';
+        touch($inputCsvPath);
+        $inputCsv = new CsvFile($inputCsvPath);
+        $inputCsv->writeRow([
+                'id', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+                '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
+                '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
+                '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
+            ]);
+        for ($i = 0; $i < 5000; $i++) {
+            $inputCsv->writeRow([
+                $i,
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+                uniqid(), uniqid(),
+            ]);
         }
 
         // update sheet
