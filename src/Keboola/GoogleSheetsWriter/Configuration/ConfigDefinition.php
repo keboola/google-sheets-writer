@@ -58,6 +58,12 @@ class ConfigDefinition implements ConfigurationInterface
                                 ->defaultValue(true)
                             ->end()
                             ->scalarNode('sheetId')
+                                ->validate()
+                                    ->ifString()
+                                    ->then(function ($value) {
+                                        return intval($value);
+                                    })
+                                ->end()
                             ->end()
                             ->scalarNode('sheetTitle')
                             ->end()

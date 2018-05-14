@@ -74,6 +74,52 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
+    public function testUpdateSpreadsheetWithStringId() : void
+    {
+        $this->prepareDataFiles();
+
+        // create sheet
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'Titanic 1 +',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ]
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $sheetId = (string) $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
+
+        // update sheet
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'Titanic 1 +',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => $sheetId,
+            'sheetTitle' => 'casualties 1+',
+            'tableId' => 'titanic_2',
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'enabled' => true,
+        ];
+
+        $process = $this->runProcess($config);
+
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $response = $this->client->getSpreadsheet($gdFile['id']);
+        $values = $this->client->getSpreadsheetValues($gdFile['id'], urlencode('casualties 1+'));
+
+        $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
+        $this->assertEquals('Titanic 1 +', $response['properties']['title']);
+        $this->assertEquals('casualties 1+', $response['sheets'][0]['properties']['title']);
+        $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
+
+        $this->client->deleteFile($gdFile['id']);
+    }
+
     public function testUpdateSpreadsheetInTeamDrive() : void
     {
         $this->prepareDataFiles();
