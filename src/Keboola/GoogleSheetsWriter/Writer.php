@@ -114,7 +114,7 @@ class Writer
                 ],
             ]
         );
-        $this->logger->debug('add sheet', [
+        $this->logger->info('add sheet', [
             'response' => $addSheetResponse,
         ]);
 
