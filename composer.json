@@ -31,5 +31,20 @@
     "psr-4": {
       "Keboola\\": ["src/Keboola/", "tests/Keboola/"]
     }
+  },
+  "scripts": {
+    "tests": "phpunit",
+    "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
+    "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
+    "phpstan": "phpstan analyse ./src ./tests --level=0 --no-progress",
+    "build": [
+      "@phpstan",
+      "@phpcs",
+      "@tests"
+    ],
+    "ci": [
+      "@composer validate --no-check-publish --no-check-all",
+      "@build"
+    ]
   }
 }
