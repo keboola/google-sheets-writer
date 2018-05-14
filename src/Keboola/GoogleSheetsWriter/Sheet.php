@@ -171,7 +171,7 @@ class Sheet
     private function findSheetPropertiesById(array $sheets, int $sheetId) : array
     {
         $results = array_filter($sheets, function ($item) use ($sheetId) {
-            return $item['properties']['sheetId'] === $sheetId;
+            return $sheetId === (int) $item['properties']['sheetId'];
         });
         return array_shift($results);
     }
