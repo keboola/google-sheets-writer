@@ -36,7 +36,7 @@ try {
     $app = new Application($config, $logger);
     $result = $app->run();
 
-    if (isset($config['action'])) {
+    if (isset($config['action']) && $config['action'] !== 'run') {
         echo json_encode($result);
         exit(0);
     }
