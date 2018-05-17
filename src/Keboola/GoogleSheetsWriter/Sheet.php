@@ -44,6 +44,7 @@ class Sheet
             // so the limit of 2M cells can be used efficiently.
             $spreadsheet = $this->client->getSpreadsheet($sheet['fileId']);
             $sheetProperties = $this->findSheetPropertiesById($spreadsheet['sheets'], $sheet['sheetId']);
+
             $gridProperties = [
                 'columnCount' => $this->inputTable->getColumnCount(),
                 'rowCount' => $sheetProperties['properties']['gridProperties']['rowCount'],
@@ -53,6 +54,13 @@ class Sheet
 
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
                 $this->client->clearSpreadsheetValues($sheet['fileId'], urlencode($sheet['sheetTitle']));
+
+                $gridProperties = [
+                    'columnCount' => $this->inputTable->getColumnCount(),
+                    'rowCount' => $this->inputTable->getRowCount(),
+                ];
+
+                $this->updateMetadata($sheet, $gridProperties);
             }
 
             // upload data
@@ -93,7 +101,8 @@ class Sheet
 
             switch ($sheet['action']) {
                 case ConfigDefinition::ACTION_UPDATE:
-                    $responses[] = $this->appendValues($sheet, $values);
+                    $range = $this->getRange($sheet['sheetTitle'], $inputTable->getColumnCount(), $offset, $limit);
+                    $responses[] = $this->updateValues($sheet, $range, $values);
                     break;
                 case ConfigDefinition::ACTION_APPEND:
                     // if sheet already contains header, strip header from values to be uploaded
@@ -130,6 +139,15 @@ class Sheet
         return $this->client->appendSpreadsheetValues(
             $sheet['fileId'],
             urlencode($sheet['sheetTitle']),
+            $values
+        );
+    }
+
+    private function updateValues(array $sheet, string $range, array $values) : array
+    {
+        return $this->client->updateSpreadsheetValues(
+            $sheet['fileId'],
+            $range,
             $values
         );
     }
@@ -174,5 +192,29 @@ class Sheet
             return $sheetId === (int) $item['properties']['sheetId'];
         });
         return array_shift($results);
+    }
+
+    public function getRange(string $sheetTitle, int $columnCount, int $rowOffset = 1, int $rowLimit = 1000) : string
+    {
+        $lastColumn = $this->columnToLetter($columnCount);
+
+        $start = 'A' . $rowOffset;
+        $end = $lastColumn . ($rowOffset + $rowLimit - 1);
+
+        return urlencode($sheetTitle) . '!' . $start . ':' . $end;
+    }
+
+    public function columnToLetter(int $column) : string
+    {
+        $alphas = range('A', 'Z');
+        $letter = '';
+
+        while ($column > 0) {
+            $remainder = ($column - 1) % 26;
+            $letter = $alphas[$remainder] . $letter;
+            $column = ($column - $remainder - 1) / 26;
+        }
+
+        return $letter;
     }
 }
