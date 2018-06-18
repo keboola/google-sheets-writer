@@ -45,6 +45,7 @@ class Sheet
             $spreadsheet = $this->client->getSpreadsheet($sheet['fileId']);
             $sheetProperties = $this->findSheetPropertiesById($spreadsheet['sheets'], $sheet['sheetId']);
 
+            // update columns
             $gridProperties = [
                 'columnCount' => $this->inputTable->getColumnCount(),
                 'rowCount' => $sheetProperties['properties']['gridProperties']['rowCount'],
@@ -55,6 +56,7 @@ class Sheet
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
                 $this->client->clearSpreadsheetValues($sheet['fileId'], urlencode($sheet['sheetTitle']));
 
+                // update rows
                 $gridProperties = [
                     'columnCount' => $this->inputTable->getColumnCount(),
                     'rowCount' => $this->inputTable->getRowCount(),
@@ -83,7 +85,7 @@ class Sheet
      */
     private function uploadValues(array $sheet, Table $inputTable) : array
     {
-        $this->logger->debug("Uploading values", ['sheet' => $sheet]);
+        $this->logger->info("Uploading values", ['sheet' => $sheet]);
 
         // insert new values, 1000 rows at a time
         $responses = [];
@@ -102,7 +104,17 @@ class Sheet
             switch ($sheet['action']) {
                 case ConfigDefinition::ACTION_UPDATE:
                     $range = $this->getRange($sheet['sheetTitle'], $inputTable->getColumnCount(), $offset, $limit);
-                    $responses[] = $this->updateValues($sheet, $range, $values);
+                    $response = $this->updateValues($sheet, $range, $values);
+                    $this->logger->info(
+                        sprintf('Updating sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
+                        [
+                            'sheet' => $sheet,
+                            'iteration' => $i,
+                            'range' => $range,
+                            'response' => $response,
+                        ]
+                    );
+                    $responses[] = $response;
                     break;
                 case ConfigDefinition::ACTION_APPEND:
                     // if sheet already contains header, strip header from values to be uploaded
