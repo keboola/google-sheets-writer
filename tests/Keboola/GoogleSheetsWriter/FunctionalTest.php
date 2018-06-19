@@ -8,14 +8,10 @@ use Keboola\Csv\CsvFile;
 use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Test\BaseTest;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 class FunctionalTest extends BaseTest
 {
-    /** @var string */
-    private $tmpDataPath = '/tmp/data-test';
-
     public function setUp() : void
     {
         parent::setUp();
@@ -208,9 +204,6 @@ class FunctionalTest extends BaseTest
         $this->assertEquals($modified['modifiedTime'], $modified2['modifiedTime']);
     }
 
-    /**
-     * Update large Spreadsheet
-     */
     public function testUpdateSpreadsheetLong() : void
     {
         $this->prepareDataFiles();
@@ -505,6 +498,45 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
+    public function testSheetNotFoundException() : void
+    {
+        $this->prepareDataFiles();
+
+        // create spreadsheet
+        $gdFile = $this->client->createFileMetadata(
+            'titanic',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ]
+        );
+
+        // add another sheet
+        $this->client->addSheet($gdFile['id'], ['properties' => ['title' => 'Sheet2']]);
+
+        // delete first sheet
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
+        $this->client->deleteSheet($gdFile['id'], $sheetId);
+
+        // run
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'titanic',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => $sheetId,
+            'sheetTitle' => 'casualties',
+            'tableId' => 'titanic_2',
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'enabled' => true,
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(1, $process->getExitCode(), $process->getErrorOutput());
+    }
+
     /**
      * Create New Spreadsheet using sync action
      */
@@ -718,24 +750,5 @@ class FunctionalTest extends BaseTest
         $process->run();
 
         return $process;
-    }
-
-    private function prepareDataFiles() : void
-    {
-        $fs = new Filesystem();
-        $fs->remove($this->tmpDataPath);
-        $fs->mkdir($this->tmpDataPath);
-        $fs->mkdir($this->tmpDataPath . '/in/tables/');
-        $fs->copy($this->dataPath . '/in/tables/titanic.csv', $this->tmpDataPath . '/in/tables/titanic.csv');
-        $fs->copy($this->dataPath . '/in/tables/titanic_1.csv', $this->tmpDataPath . '/in/tables/titanic_1.csv');
-        $fs->copy($this->dataPath . '/in/tables/titanic_2.csv', $this->tmpDataPath . '/in/tables/titanic_2.csv');
-        $fs->copy(
-            $this->dataPath . '/in/tables/titanic_2_append.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append.csv'
-        );
-        $fs->copy(
-            $this->dataPath . '/in/tables/titanic_2_append_2.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv'
-        );
     }
 }
