@@ -8,11 +8,15 @@ use Keboola\Csv\CsvFile;
 use Keboola\Google\ClientBundle\Google\RestApi;
 use Keboola\GoogleSheetsClient\Client;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 class BaseTest extends TestCase
 {
     /** @var string */
     protected $dataPath = __DIR__ . '/../../../../tests/data';
+
+    /** @var string */
+    protected $tmpDataPath = '/tmp/data-test';
 
     /** @var Client */
     protected $client;
@@ -52,5 +56,24 @@ class BaseTest extends TestCase
         }
 
         return $values;
+    }
+
+    protected function prepareDataFiles() : void
+    {
+        $fs = new Filesystem();
+        $fs->remove($this->tmpDataPath);
+        $fs->mkdir($this->tmpDataPath);
+        $fs->mkdir($this->tmpDataPath . '/in/tables/');
+        $fs->copy($this->dataPath . '/in/tables/titanic.csv', $this->tmpDataPath . '/in/tables/titanic.csv');
+        $fs->copy($this->dataPath . '/in/tables/titanic_1.csv', $this->tmpDataPath . '/in/tables/titanic_1.csv');
+        $fs->copy($this->dataPath . '/in/tables/titanic_2.csv', $this->tmpDataPath . '/in/tables/titanic_2.csv');
+        $fs->copy(
+            $this->dataPath . '/in/tables/titanic_2_append.csv',
+            $this->tmpDataPath . '/in/tables/titanic_2_append.csv'
+        );
+        $fs->copy(
+            $this->dataPath . '/in/tables/titanic_2_append_2.csv',
+            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv'
+        );
     }
 }

@@ -44,10 +44,26 @@ class Sheet
             // so the limit of 2M cells can be used efficiently.
             $spreadsheet = $this->client->getSpreadsheet($sheet['fileId']);
             $sheetProperties = $this->findSheetPropertiesById($spreadsheet['sheets'], $sheet['sheetId']);
+            $columnCount = $this->inputTable->getColumnCount();
+            $rowCount = $this->inputTable->getRowCount();
+
+            if (empty($sheetProperties)) {
+                throw new UserException(sprintf(
+                    'Sheet "%s (%s)" not found in file "%s (%s)"',
+                    $sheet['sheetTitle'],
+                    $sheet['sheetId'],
+                    $sheet['title'],
+                    $sheet['fileId']
+                ));
+            }
+
+            if ($columnCount * $rowCount > 2000000) {
+                throw new UserException('CSV file exceeds the limit of 2000000 cells');
+            }
 
             // update columns
             $gridProperties = [
-                'columnCount' => $this->inputTable->getColumnCount(),
+                'columnCount' => $columnCount,
                 'rowCount' => $sheetProperties['properties']['gridProperties']['rowCount'],
             ];
 
@@ -58,8 +74,8 @@ class Sheet
 
                 // update rows
                 $gridProperties = [
-                    'columnCount' => $this->inputTable->getColumnCount(),
-                    'rowCount' => $this->inputTable->getRowCount(),
+                    'columnCount' => $columnCount,
+                    'rowCount' => $rowCount,
                 ];
 
                 $this->updateMetadata($sheet, $gridProperties);
@@ -68,7 +84,6 @@ class Sheet
             // upload data
             $this->uploadValues($sheet, $this->inputTable);
         } catch (ClientException $e) {
-            //@todo handle API exception
             throw new UserException($e->getMessage(), 0, $e, [
                 'response' => $e->getResponse()->getBody()->getContents(),
                 'reasonPhrase' => $e->getResponse()->getReasonPhrase(),
@@ -203,6 +218,11 @@ class Sheet
         $results = array_filter($sheets, function ($item) use ($sheetId) {
             return $sheetId === (int) $item['properties']['sheetId'];
         });
+
+        if (empty($results)) {
+            return [];
+        }
+
         return array_shift($results);
     }
 
