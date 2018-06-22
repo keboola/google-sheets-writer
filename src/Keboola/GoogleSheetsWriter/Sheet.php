@@ -40,16 +40,14 @@ class Sheet
     {
         try {
             // Update sheets title and grid properties.
-            // This will adjust the column count to the size of the uploaded table,
-            // so the limit of 2M cells can be used efficiently.
-            $spreadsheet = $this->client->getSpreadsheet($sheet['fileId']);
-            $sheetProperties = $this->findSheetPropertiesById($spreadsheet['sheets'], $sheet['sheetId']);
+            // This will adjust the columns and rows count to the size of the uploaded table
+            $sheetProperties = $this->getSheetProperties($sheet['fileId'], $sheet['sheetId']);
             $columnCount = $this->inputTable->getColumnCount();
-            $rowCount = $this->inputTable->getRowCount();
+            $rowCountSrc = $this->inputTable->getRowCount();
 
             if (empty($sheetProperties)) {
                 throw new UserException(sprintf(
-                    'Sheet "%s (%s)" not found in file "%s (%s)"',
+                    'Sheet "%s" (%s) not found in file "%s" (%s)',
                     $sheet['sheetTitle'],
                     $sheet['sheetId'],
                     $sheet['title'],
@@ -57,32 +55,25 @@ class Sheet
                 ));
             }
 
-            if ($columnCount * $rowCount > 2000000) {
+            if ($columnCount * $rowCountSrc > 2000000) {
                 throw new UserException('CSV file exceeds the limit of 2000000 cells');
             }
 
             // update columns
-            $gridProperties = [
-                'columnCount' => $columnCount,
-                'rowCount' => $sheetProperties['properties']['gridProperties']['rowCount'],
-            ];
-
-            $this->updateMetadata($sheet, $gridProperties);
+            $rowCountDst = $sheetProperties['properties']['gridProperties']['rowCount'];
+            $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountDst]);
 
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
                 $this->client->clearSpreadsheetValues($sheet['fileId'], urlencode($sheet['sheetTitle']));
-
-                // update rows
-                $gridProperties = [
-                    'columnCount' => $columnCount,
-                    'rowCount' => $rowCount,
-                ];
-
-                $this->updateMetadata($sheet, $gridProperties);
+                // update rows to match source size
+                $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountSrc]);
             }
 
             // upload data
-            $this->uploadValues($sheet, $this->inputTable);
+            $responses = $this->uploadValues($sheet, $this->inputTable);
+
+            // check uploaded data
+            $this->validateRowCount($rowCountSrc, $this->countUpdatedRows($responses), $sheet);
         } catch (ClientException $e) {
             throw new UserException($e->getMessage(), 0, $e, [
                 'response' => $e->getResponse()->getBody()->getContents(),
@@ -136,7 +127,7 @@ class Sheet
                     if ($offset === 1) {
                         $sheetValues = $this->client->getSpreadsheetValues(
                             $sheet['fileId'],
-                            urlencode($sheet['sheetTitle'])
+                            $this->getRange($sheet['sheetTitle'], $inputTable->getColumnCount(), $offset, 100)
                         );
 
                         if (!empty($sheetValues['values'])) {
@@ -213,6 +204,13 @@ class Sheet
         ]);
     }
 
+    private function getSheetProperties(string $fileId, int $sheetId): array
+    {
+        $spreadsheet = $this->client->getSpreadsheet($fileId);
+
+        return $this->findSheetPropertiesById($spreadsheet['sheets'], $sheetId);
+    }
+
     private function findSheetPropertiesById(array $sheets, int $sheetId) : array
     {
         $results = array_filter($sheets, function ($item) use ($sheetId) {
@@ -248,5 +246,41 @@ class Sheet
         }
 
         return $letter;
+    }
+
+    public function validateRowCount(int $rowCountSrc, int $rowCountUpdated, array $sheet): void
+    {
+        $isAppend = $sheet['action'] === ConfigDefinition::ACTION_APPEND;
+        $commonCondition = $rowCountSrc == $rowCountUpdated;
+        // header is omitted when appending to non-empty file
+        $appendCondition = $isAppend && (($rowCountSrc - 1 == $rowCountUpdated) || $rowCountSrc == $rowCountUpdated);
+
+        if (!$commonCondition && !$appendCondition) {
+            throw new UserException(sprintf(
+                'Number of written rows (%d) in the sheet does not match with source table (%d).'
+                . 'File "%s" (%s), sheet "%s" (%s).'
+                . 'Try disabling all filters in the sheet and run the writer again.',
+                $rowCountUpdated,
+                $rowCountSrc,
+                $sheet['title'],
+                $sheet['fileId'],
+                $sheet['sheetTitle'],
+                $sheet['sheetId']
+            ));
+        }
+    }
+
+    private function countUpdatedRows($responses): int
+    {
+        $result = 0;
+        foreach ($responses as $response) {
+            if (isset($response['updates'])) {
+                $result += $response['updates']['updatedRows'];
+                continue;
+            }
+            $result += $response['updatedRows'];
+        }
+
+        return $result;
     }
 }

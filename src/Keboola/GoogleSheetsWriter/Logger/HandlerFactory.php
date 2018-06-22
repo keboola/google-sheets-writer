@@ -23,9 +23,35 @@ class HandlerFactory
 
     public static function getStderrHandlers() : array
     {
-        $errHandler = new StreamHandler('php://stderr', Logger::NOTICE, false);
-        $infoHandler = new StreamHandler('php://stdout', Logger::INFO, false);
-        $infoHandler->setFormatter(new LineFormatter("%message%\n"));
-        return [$errHandler, $infoHandler];
+        return [
+            self::getCriticalHandler(),
+            self::getErrorHandler(),
+            self::getInfoHandler(),
+        ];
+    }
+
+    public static function getErrorHandler(): StreamHandler
+    {
+        $errorHandler = new StreamHandler('php://stderr');
+        $errorHandler->setBubble(false);
+        $errorHandler->setLevel(Logger::WARNING);
+        $errorHandler->setFormatter(new LineFormatter("%message%\n"));
+        return $errorHandler;
+    }
+    public static function getInfoHandler(): StreamHandler
+    {
+        $logHandler = new StreamHandler('php://stdout');
+        $logHandler->setBubble(false);
+        $logHandler->setLevel(Logger::INFO);
+        $logHandler->setFormatter(new LineFormatter("%message%\n"));
+        return $logHandler;
+    }
+    public static function getCriticalHandler(): StreamHandler
+    {
+        $handler = new StreamHandler('php://stderr');
+        $handler->setBubble(false);
+        $handler->setLevel(Logger::CRITICAL);
+        $handler->setFormatter(new LineFormatter("[%datetime%] %level_name%: %message% %context% %extra%\n"));
+        return $handler;
     }
 }
