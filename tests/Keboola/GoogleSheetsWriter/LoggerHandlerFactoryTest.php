@@ -20,6 +20,6 @@ class LoggerHandlerFactoryTest extends TestCase
     {
         $handlers = HandlerFactory::getStderrHandlers();
         $this->assertContainsOnlyInstancesOf('Monolog\Handler\StreamHandler', $handlers);
-        $this->assertCount(2, $handlers);
+        $this->assertCount(3, $handlers);
     }
 }

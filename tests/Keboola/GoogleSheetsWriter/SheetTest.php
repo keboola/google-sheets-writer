@@ -7,7 +7,6 @@ namespace Keboola\GoogleSheetsWriter;
 use Keboola\Csv\CsvFile;
 use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
-use Keboola\GoogleSheetsWriter\Exception\UserException;
 use Keboola\GoogleSheetsWriter\Logger\HandlerFactory;
 use Keboola\GoogleSheetsWriter\Test\BaseTest;
 use Monolog\Logger;
@@ -51,7 +50,7 @@ class SheetTest extends BaseTest
         $sheetWriter = new Sheet($this->client, new Input\Table($this->tmpDataPath, 'titanic_2'), $logger);
 
         $this->expectException('Keboola\\GoogleSheetsWriter\\Exception\\UserException');
-        $this->expectExceptionMessage("Sheet \"casualties (0)\" not found in file \"titanic");
+        $this->expectExceptionMessage('Sheet "casualties" (0) not found in file "titanic"');
         $sheetWriter->process($sheetConfig);
     }
 

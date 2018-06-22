@@ -390,6 +390,7 @@ class FunctionalTest extends BaseTest
         ];
 
         $process = $this->runProcess($config);
+
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
 
         $config2 = $config;
@@ -534,6 +535,7 @@ class FunctionalTest extends BaseTest
         ];
 
         $process = $this->runProcess($config);
+
         $this->assertEquals(1, $process->getExitCode(), $process->getErrorOutput());
     }
 
