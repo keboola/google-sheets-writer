@@ -64,16 +64,16 @@ class Sheet
             $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountDst]);
 
             if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
-                $this->client->clearSpreadsheetValues($sheet['fileId'], urlencode($sheet['sheetTitle']));
+                $this->client->clearSpreadsheetValues(
+                    $sheet['fileId'],
+                    $this->getRange($sheet['sheetTitle'], $columnCount, 1, $rowCountDst)
+                );
                 // update rows to match source size
                 $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountSrc]);
             }
 
             // upload data
-            $responses = $this->uploadValues($sheet, $this->inputTable);
-
-            // check uploaded data
-            $this->validateRowCount($rowCountSrc, $this->countUpdatedRows($responses), $sheet);
+            $this->uploadValues($sheet, $this->inputTable);
         } catch (ClientException $e) {
             throw new UserException($e->getMessage(), 0, $e, [
                 'response' => $e->getResponse()->getBody()->getContents(),
@@ -224,12 +224,12 @@ class Sheet
         return array_shift($results);
     }
 
-    public function getRange(string $sheetTitle, int $columnCount, int $rowOffset = 1, int $rowLimit = 1000) : string
+    public function getRange(string $sheetTitle, int $columnCount, int $rowStart = 1, int $rowEnd = 1000) : string
     {
         $lastColumn = $this->columnToLetter($columnCount);
 
-        $start = 'A' . $rowOffset;
-        $end = $lastColumn . ($rowOffset + $rowLimit - 1);
+        $start = 'A' . $rowStart;
+        $end = $lastColumn . ($rowStart + $rowEnd - 1);
 
         return urlencode($sheetTitle) . '!' . $start . ':' . $end;
     }
