@@ -269,18 +269,4 @@ class Sheet
             ));
         }
     }
-
-    private function countUpdatedRows($responses): int
-    {
-        $result = 0;
-        foreach ($responses as $response) {
-            if (isset($response['updates'])) {
-                $result += $response['updates']['updatedRows'];
-                continue;
-            }
-            $result += $response['updatedRows'];
-        }
-
-        return $result;
-    }
 }
