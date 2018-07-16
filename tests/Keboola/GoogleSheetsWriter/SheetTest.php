@@ -101,4 +101,44 @@ class SheetTest extends BaseTest
         $this->expectExceptionMessage('CSV file exceeds the limit of 2000000 cells');
         $sheetWriter->process($sheetConfig);
     }
+
+    public function testA1SheetName(): void
+    {
+        $this->prepareDataFiles();
+
+        // create file
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'titanic_1',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ]
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
+
+        // update sheet, set name causing problems (ie. AB2, google thinks it's A1 notation)
+        $tableId = 'titanic';
+        $sheetConfig = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'pirates',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => $sheetId,
+            'sheetTitle' => 'AA2',
+            'tableId' => $tableId,
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'enabled' => true,
+        ];
+
+        $logger = new Logger('wr-google-drive', HandlerFactory::getStderrHandlers());
+        $sheetWriter = new Sheet($this->client, new Input\Table($this->tmpDataPath, $tableId), $logger);
+        $responses = $sheetWriter->process($sheetConfig);
+        $this->assertNotEmpty($responses);
+        $response = $responses[0];
+        $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
+        $this->assertEquals('\'AA2\'!A1:F33', $response['updatedRange']);
+    }
 }

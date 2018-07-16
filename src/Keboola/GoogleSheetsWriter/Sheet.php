@@ -30,13 +30,7 @@ class Sheet
         $this->logger = $logger;
     }
 
-    /**
-     * @param array $sheet
-     * @throws UserException
-     * @throws ApplicationException
-     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
-     */
-    public function process(array $sheet) : void
+    public function process(array $sheet): array
     {
         try {
             // Update sheets title and grid properties.
@@ -73,7 +67,7 @@ class Sheet
             }
 
             // upload data
-            $this->uploadValues($sheet, $this->inputTable);
+            return $this->uploadValues($sheet, $this->inputTable);
         } catch (ClientException $e) {
             throw new UserException($e->getMessage(), 0, $e, [
                 'response' => $e->getResponse()->getBody()->getContents(),
