@@ -1,4 +1,4 @@
-FROM php:7.1-cli
+FROM php:7-cli
 MAINTAINER Miro Cillik <miro@keboola.com>
 
 # Deps
