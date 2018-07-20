@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ClientException;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
+use Keboola\GoogleSheetsWriter\Input\Paginator;
 use Keboola\GoogleSheetsWriter\Input\Table;
 use Keboola\GoogleSheetsClient\Client;
 use Monolog\Logger;
@@ -38,36 +39,31 @@ class Sheet
             $sheetProperties = $this->getSheetProperties($sheet['fileId'], $sheet['sheetId']);
             $columnCount = $this->inputTable->getColumnCount();
             $rowCountSrc = $this->inputTable->getRowCount();
-
-            if (empty($sheetProperties)) {
-                throw new UserException(sprintf(
-                    'Sheet "%s" (%s) not found in file "%s" (%s)',
-                    $sheet['sheetTitle'],
-                    $sheet['sheetId'],
-                    $sheet['title'],
-                    $sheet['fileId']
-                ));
-            }
-
-            if ($columnCount * $rowCountSrc > 2000000) {
-                throw new UserException('CSV file exceeds the limit of 2000000 cells');
-            }
+            $this->preFlightChecks($sheet, $sheetProperties, $columnCount, $rowCountSrc);
 
             // update columns
             $rowCountDst = $sheetProperties['properties']['gridProperties']['rowCount'];
             $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountDst]);
 
-            if ($sheet['action'] === ConfigDefinition::ACTION_UPDATE) {
-                $this->client->clearSpreadsheetValues(
-                    $sheet['fileId'],
-                    $this->getRange($sheet['sheetTitle'], $columnCount, 1, $rowCountDst)
-                );
-                // update rows to match source size
-                $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountSrc]);
-            }
-
             // upload data
-            return $this->uploadValues($sheet, $this->inputTable);
+            switch ($sheet['action']) {
+                case ConfigDefinition::ACTION_UPDATE:
+                    $this->client->clearSpreadsheetValues(
+                        $sheet['fileId'],
+                        $this->getRange($sheet['sheetTitle'], $columnCount, 1, $rowCountDst)
+                    );
+
+                    // update rows to match source size
+                    $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountSrc]);
+
+                    return $this->updateAction($sheet, $this->inputTable);
+                case ConfigDefinition::ACTION_APPEND:
+                    return $this->appendAction($sheet, $this->inputTable);
+                    break;
+                default:
+                    throw new ApplicationException(sprintf("Action '%s' not allowed", $sheet['action']));
+                    break;
+            }
         } catch (ClientException $e) {
             throw new UserException($e->getMessage(), 0, $e, [
                 'response' => $e->getResponse()->getBody()->getContents(),
@@ -76,77 +72,73 @@ class Sheet
         }
     }
 
-    /**
-     * @param array $sheet
-     * @param Table $inputTable
-     * @return array
-     * @throws ApplicationException
-     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
-     */
-    private function uploadValues(array $sheet, Table $inputTable) : array
+    private function preFlightChecks(array $sheet, array $sheetProperties, int $columnCount, int $rowCountSrc): void
     {
-        $this->logger->info("Uploading values", ['sheet' => $sheet]);
+        if (empty($sheetProperties)) {
+            throw new UserException(sprintf(
+                'Sheet "%s" (%s) not found in file "%s" (%s)',
+                $sheet['sheetTitle'],
+                $sheet['sheetId'],
+                $sheet['title'],
+                $sheet['fileId']
+            ));
+        }
 
-        // insert new values, 1000 rows at a time
+        if ($columnCount * $rowCountSrc > 2000000) {
+            throw new UserException('CSV file exceeds the limit of 2000000 cells');
+        }
+    }
+
+    private function updateAction(array $sheet, Table $inputTable): array
+    {
+        $this->logger->info("Updating values", ['sheet' => $sheet]);
+
         $responses = [];
-        $offset = 1;
-        $limit = 5000;
-        $csvFile = $inputTable->getCsvFile();
-        while ($csvFile->current()) {
-            $i = 0;
-            $values = [];
-            while ($i < $limit && $csvFile->current()) {
-                $values[] = $csvFile->current();
-                $csvFile->next();
-                $i++;
-            }
-
-            switch ($sheet['action']) {
-                case ConfigDefinition::ACTION_UPDATE:
-                    $range = $this->getRange($sheet['sheetTitle'], $inputTable->getColumnCount(), $offset, $limit);
-                    $response = $this->updateValues($sheet, $range, $values);
-                    $this->logger->info(
-                        sprintf('Updating sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
-                        [
-                            'sheet' => $sheet,
-                            'iteration' => $i,
-                            'range' => $range,
-                            'response' => $response,
-                        ]
-                    );
-                    $responses[] = $response;
-                    break;
-                case ConfigDefinition::ACTION_APPEND:
-                    // if sheet already contains header, strip header from values to be uploaded
-                    if ($offset === 1) {
-                        $sheetValues = $this->client->getSpreadsheetValues(
-                            $sheet['fileId'],
-                            $this->getRange($sheet['sheetTitle'], $inputTable->getColumnCount(), $offset, 100)
-                        );
-
-                        if (!empty($sheetValues['values'])) {
-                            array_shift($values);
-                        }
-                    }
-                    $responses[] = $this->appendValues($sheet, $values);
-                    break;
-                default:
-                    throw new ApplicationException(sprintf("Action '%s' not allowed", $sheet['action']));
-                    break;
-            }
-            $offset = $offset + $i;
+        $paginator = new Paginator($inputTable);
+        foreach ($paginator->pages() as $values) {
+            $range = $this->getRange(
+                $sheet['sheetTitle'],
+                $this->inputTable->getColumnCount(),
+                $paginator->getOffset(),
+                $paginator->getLimit()
+            );
+            $response = $this->updateValues($sheet, $range, $values);
+            $this->logger->info(
+                sprintf('Updating sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
+                [
+                    'sheet' => $sheet,
+                    'iteration' => $paginator->getOffset(),
+                    'range' => $range,
+                    'response' => $response,
+                ]
+            );
+            $responses[] = $response;
         }
 
         return $responses;
     }
 
-    /**
-     * @param array $sheet
-     * @param array $values
-     * @return array
-     * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
-     */
-    private function appendValues(array $sheet, array $values) : array
+    private function appendAction(array $sheet, Table $inputTable): array
+    {
+        $this->logger->info("Appending values", ['sheet' => $sheet]);
+
+        $responses = [];
+        $paginator = new Paginator($inputTable);
+        $hasHeader = $this->hasHeader($sheet);
+
+        foreach ($paginator->pages() as $values) {
+            // if sheet already contains header, strip header from values to be uploaded
+            if ($paginator->getOffset() === 1 && $hasHeader) {
+                array_shift($values);
+            }
+
+            $responses[] = $this->appendValues($sheet, $values);
+        }
+
+        return $responses;
+    }
+
+    private function appendValues(array $sheet, array $values): array
     {
         return $this->client->appendSpreadsheetValues(
             $sheet['fileId'],
@@ -155,7 +147,7 @@ class Sheet
         );
     }
 
-    private function updateValues(array $sheet, string $range, array $values) : array
+    private function updateValues(array $sheet, string $range, array $values): array
     {
         return $this->client->updateSpreadsheetValues(
             $sheet['fileId'],
@@ -176,7 +168,7 @@ class Sheet
      * @return array
      * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
      */
-    private function updateMetadata(array $sheet, array $gridProperties = []) : array
+    private function updateMetadata(array $sheet, array $gridProperties = []): array
     {
         $request = [
             'updateSheetProperties' => [
@@ -218,12 +210,12 @@ class Sheet
         return array_shift($results);
     }
 
-    public function getRange(string $sheetTitle, int $columnCount, int $rowStart = 1, int $rowEnd = 1000) : string
+    public function getRange(string $sheetTitle, int $columnCount, int $offset = 1, int $limit = 1000): string
     {
         $lastColumn = $this->columnToLetter($columnCount);
 
-        $start = 'A' . $rowStart;
-        $end = $lastColumn . ($rowStart + $rowEnd - 1);
+        $start = 'A' . $offset;
+        $end = $lastColumn . ($offset + $limit - 1);
 
         return urlencode($sheetTitle) . '!' . $start . ':' . $end;
     }
@@ -251,8 +243,8 @@ class Sheet
 
         if (!$commonCondition && !$appendCondition) {
             throw new UserException(sprintf(
-                'Number of written rows (%d) in the sheet does not match with source table (%d).'
-                . 'File "%s" (%s), sheet "%s" (%s).'
+                'Number of written rows (%d) in the sheet does not match with source table (%d). '
+                . 'File "%s" (%s), sheet "%s" (%s). '
                 . 'Try disabling all filters in the sheet and run the writer again.',
                 $rowCountUpdated,
                 $rowCountSrc,
@@ -262,5 +254,15 @@ class Sheet
                 $sheet['sheetId']
             ));
         }
+    }
+
+    public function hasHeader(array $sheet): bool
+    {
+        $sheetValues = $this->client->getSpreadsheetValues(
+            $sheet['fileId'],
+            $this->getRange($sheet['sheetTitle'], $this->inputTable->getColumnCount(), 1, 1)
+        );
+
+        return (!empty($sheetValues['values']));
     }
 }
