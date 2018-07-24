@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ClientException;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
+use Keboola\GoogleSheetsWriter\Input\Page;
 use Keboola\GoogleSheetsWriter\Input\Paginator;
 use Keboola\GoogleSheetsWriter\Input\Table;
 use Keboola\GoogleSheetsClient\Client;
@@ -93,19 +94,21 @@ class Sheet
 
         $responses = [];
         $paginator = new Paginator($inputTable);
-        foreach ($paginator->pages() as $offset => $values) {
+
+        /** @var Page $page */
+        foreach ($paginator->pages() as $page) {
             $range = $this->getRange(
                 $sheet['sheetTitle'],
                 $this->inputTable->getColumnCount(),
-                $offset,
-                $paginator->getLimit()
+                $page->getOffset(),
+                $page->getLimit()
             );
-            $response = $this->updateValues($sheet, $range, $values);
+            $response = $this->updateValues($sheet, $range, $page->getValues());
             $this->logger->info(
                 sprintf('Updating data in sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
                 [
                     'sheet' => $sheet,
-                    'offset' => $offset,
+                    'offset' => $page->getOffset(),
                     'range' => $range,
                     'response' => $response,
                 ]
@@ -124,9 +127,11 @@ class Sheet
         $paginator = new Paginator($inputTable);
         $hasHeader = $this->hasHeader($sheet);
 
-        foreach ($paginator->pages() as $offset => $values) {
+        /** @var Page $page */
+        foreach ($paginator->pages() as $page) {
+            $values = $page->getValues();
             // if sheet already contains header, strip header from values to be uploaded
-            if ($offset === 1 && $hasHeader) {
+            if ($page->isFirst() && $hasHeader) {
                 array_shift($values);
             }
 
@@ -135,7 +140,7 @@ class Sheet
                 sprintf('Appending data to sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
                 [
                     'sheet' => $sheet,
-                    'offset' => $offset,
+                    'offset' => $page->getOffset(),
                     'response' => $response,
                 ]
             );
