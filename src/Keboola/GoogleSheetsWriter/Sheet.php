@@ -37,32 +37,30 @@ class Sheet
             // Update sheets title and grid properties.
             // This will adjust the columns and rows count to the size of the uploaded table
             $sheetProperties = $this->getSheetProperties($sheet['fileId'], $sheet['sheetId']);
-            $columnCount = $this->inputTable->getColumnCount();
+            $columnCountSrc = $this->inputTable->getColumnCount();
             $rowCountSrc = $this->inputTable->getRowCount();
-            $this->preFlightChecks($sheet, $sheetProperties, $columnCount, $rowCountSrc);
+            $this->preFlightChecks($sheet, $sheetProperties, $columnCountSrc, $rowCountSrc);
 
             // update columns
             $rowCountDst = $sheetProperties['properties']['gridProperties']['rowCount'];
-            $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountDst]);
+            $this->updateMetadata($sheet, ['columnCount' => $columnCountSrc, 'rowCount' => $rowCountDst]);
 
             // upload data
             switch ($sheet['action']) {
                 case ConfigDefinition::ACTION_UPDATE:
                     $this->client->clearSpreadsheetValues(
                         $sheet['fileId'],
-                        $this->getRange($sheet['sheetTitle'], $columnCount, 1, $rowCountDst)
+                        $this->getRange($sheet['sheetTitle'], $columnCountSrc, 1, $rowCountDst)
                     );
 
                     // update rows to match source size
-                    $this->updateMetadata($sheet, ['columnCount' => $columnCount, 'rowCount' => $rowCountSrc]);
+                    $this->updateMetadata($sheet, ['columnCount' => $columnCountSrc, 'rowCount' => $rowCountSrc]);
 
                     return $this->updateAction($sheet, $this->inputTable);
                 case ConfigDefinition::ACTION_APPEND:
                     return $this->appendAction($sheet, $this->inputTable);
-                    break;
                 default:
-                    throw new ApplicationException(sprintf("Action '%s' not allowed", $sheet['action']));
-                    break;
+                    throw new ApplicationException(sprintf('Unknown action "%s"', $sheet['action']));
             }
         } catch (ClientException $e) {
             throw new UserException($e->getMessage(), 0, $e, [
@@ -72,7 +70,7 @@ class Sheet
         }
     }
 
-    private function preFlightChecks(array $sheet, array $sheetProperties, int $columnCount, int $rowCountSrc): void
+    private function preFlightChecks(array $sheet, array $sheetProperties, int $columnCountSrc, int $rowCountSrc): void
     {
         if (empty($sheetProperties)) {
             throw new UserException(sprintf(
@@ -84,7 +82,7 @@ class Sheet
             ));
         }
 
-        if ($columnCount * $rowCountSrc > 2000000) {
+        if ($columnCountSrc * $rowCountSrc > 2000000) {
             throw new UserException('CSV file exceeds the limit of 2000000 cells');
         }
     }
@@ -95,19 +93,19 @@ class Sheet
 
         $responses = [];
         $paginator = new Paginator($inputTable);
-        foreach ($paginator->pages() as $values) {
+        foreach ($paginator->pages() as $offset => $values) {
             $range = $this->getRange(
                 $sheet['sheetTitle'],
                 $this->inputTable->getColumnCount(),
-                $paginator->getOffset(),
+                $offset,
                 $paginator->getLimit()
             );
             $response = $this->updateValues($sheet, $range, $values);
             $this->logger->info(
-                sprintf('Updating sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
+                sprintf('Updating data in sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
                 [
                     'sheet' => $sheet,
-                    'iteration' => $paginator->getOffset(),
+                    'offset' => $offset,
                     'range' => $range,
                     'response' => $response,
                 ]
@@ -126,13 +124,22 @@ class Sheet
         $paginator = new Paginator($inputTable);
         $hasHeader = $this->hasHeader($sheet);
 
-        foreach ($paginator->pages() as $values) {
+        foreach ($paginator->pages() as $offset => $values) {
             // if sheet already contains header, strip header from values to be uploaded
-            if ($paginator->getOffset() === 1 && $hasHeader) {
+            if ($offset === 1 && $hasHeader) {
                 array_shift($values);
             }
 
-            $responses[] = $this->appendValues($sheet, $values);
+            $response = $this->appendValues($sheet, $values);
+            $this->logger->info(
+                sprintf('Appending data to sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
+                [
+                    'sheet' => $sheet,
+                    'offset' => $offset,
+                    'response' => $response,
+                ]
+            );
+            $responses[] = $response;
         }
 
         return $responses;
