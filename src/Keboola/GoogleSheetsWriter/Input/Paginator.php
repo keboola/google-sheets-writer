@@ -33,14 +33,9 @@ class Paginator
                 $i++;
             }
 
-            yield $values;
+            yield $this->offset => $values;
             $this->offset = $this->offset + $i;
         }
-    }
-
-    public function getOffset(): int
-    {
-        return $this->offset;
     }
 
     public function getLimit(): int
