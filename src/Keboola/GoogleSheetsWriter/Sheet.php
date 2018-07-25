@@ -95,7 +95,6 @@ class Sheet
         $responses = [];
         $paginator = new Paginator($inputTable);
 
-        /** @var Page $page */
         foreach ($paginator->pages() as $page) {
             $range = $this->getRange(
                 $sheet['sheetTitle'],
@@ -125,13 +124,11 @@ class Sheet
 
         $responses = [];
         $paginator = new Paginator($inputTable);
-        $hasHeader = $this->hasHeader($sheet);
+        $sheetHasHeader = $this->hasHeader($sheet);
 
-        /** @var Page $page */
         foreach ($paginator->pages() as $page) {
             $values = $page->getValues();
-            // if sheet already contains header, strip header from values to be uploaded
-            if ($page->isFirst() && $hasHeader) {
+            if ($page->isFirst() && $sheetHasHeader) {
                 array_shift($values);
             }
 

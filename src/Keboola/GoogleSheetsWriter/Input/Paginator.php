@@ -21,6 +21,7 @@ class Paginator
         $this->limit = $limit;
     }
 
+    /** @return \Generator|Page[] */
     public function pages(): \Generator
     {
         $csvFile = $this->inputTable->getCsvFile();
