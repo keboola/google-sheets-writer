@@ -565,6 +565,30 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($response['spreadsheet']['spreadsheetId']);
     }
 
+    public function testSyncActionCreateSpreadsheet404() : void
+    {
+        $this->prepareDataFiles();
+
+        $config = $this->prepareConfig();
+        $config['action'] = 'createSpreadsheet';
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'title' => 'titanic',
+            'enabled' => true,
+            'folder' => ['id' => 'non-existent-folder-id'],
+            'action' => ConfigDefinition::ACTION_UPDATE,
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(1, $process->getExitCode(), $process->getErrorOutput());
+        $response = json_decode($process->getOutput(), true);
+        $this->assertEquals('error', $response['status']);
+        $this->assertEquals('User Error', $response['error']);
+        $this->assertContains('File or folder not found.', $response['message']);
+    }
+
+
+
     /**
      * Add Sheet to a Spreadsheet using sync action
      */

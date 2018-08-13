@@ -87,6 +87,9 @@ class Application
                 }
                 throw new UserException("Reason: " . $e->getResponse()->getReasonPhrase(), $e->getCode(), $e);
             }
+            if ($e->getCode() == 404) {
+                throw new UserException('File or folder not found. ' . $e->getMessage(), $e->getCode(), $e);
+            }
             if ($e->getCode() == 400) {
                 throw new UserException($e->getMessage());
             }
