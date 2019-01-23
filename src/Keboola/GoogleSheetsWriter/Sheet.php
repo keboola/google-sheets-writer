@@ -83,8 +83,8 @@ class Sheet
             ));
         }
 
-        if ($columnCountSrc * $rowCountSrc > 2000000) {
-            throw new UserException('CSV file exceeds the limit of 2000000 cells');
+        if ($columnCountSrc * $rowCountSrc > 5000000) {
+            throw new UserException('CSV file exceeds the limit of 5000000 cells');
         }
     }
 
