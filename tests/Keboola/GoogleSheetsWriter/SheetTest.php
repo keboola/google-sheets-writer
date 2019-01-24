@@ -71,12 +71,12 @@ class SheetTest extends BaseTest
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
         $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
 
-        // create large file (> 2M cells)
+        // create large file (> 5M cells)
         $inputCsvPath = $this->tmpDataPath . '/in/tables/large.csv';
         touch($inputCsvPath);
         $inputCsv = new CsvFile($inputCsvPath);
         $inputCsv->writeRow(['id', 'random']);
-        for ($i = 0; $i < 1000002; $i++) {
+        for ($i = 0; $i < 2500002; $i++) {
             $inputCsv->writeRow([$i, uniqid()]);
         }
 
@@ -98,7 +98,7 @@ class SheetTest extends BaseTest
         $sheetWriter = new Sheet($this->client, new Input\Table($this->tmpDataPath, $tableId), $logger);
 
         $this->expectException('Keboola\\GoogleSheetsWriter\\Exception\\UserException');
-        $this->expectExceptionMessage('CSV file exceeds the limit of 2000000 cells');
+        $this->expectExceptionMessage('CSV file exceeds the limit of 5000000 cells');
         $sheetWriter->process($sheetConfig);
     }
 

@@ -1,24 +1,10 @@
 sudo: required
-
 language: bash
-
 services:
   - docker
 
-install:
-  - docker-compose build tests
-
 script:
   - docker-compose run --rm tests
-
-after_success:
-  - docker images
-
-after_error:
-  - docker-compose logs
-
-after_failure:
-  - docker-compose logs
 
 deploy:
   provider: script
