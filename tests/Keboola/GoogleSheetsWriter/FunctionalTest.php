@@ -587,8 +587,6 @@ class FunctionalTest extends BaseTest
         $this->assertContains('File or folder not found.', $response['message']);
     }
 
-
-
     /**
      * Add Sheet to a Spreadsheet using sync action
      */
