@@ -225,7 +225,7 @@ class FunctionalTest extends BaseTest
         touch($inputCsvPath);
         $inputCsv = new CsvFile($inputCsvPath);
         $inputCsv->writeRow(['id', 'random']);
-        for ($i = 0; $i < 80000; $i++) {
+        for ($i = 0; $i < 200000; $i++) {
             $inputCsv->writeRow([$i, uniqid()]);
         }
 
