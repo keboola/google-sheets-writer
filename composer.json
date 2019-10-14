@@ -19,6 +19,7 @@
     "symfony/process": "^4.0",
     "keboola/php-temp": "^1.0",
     "keboola/google-sheets-client": "^1.4",
+    "keboola/google-client-bundle": "^5.0.1",
     "graylog2/gelf-php": "^1.5"
   },
   "require-dev": {

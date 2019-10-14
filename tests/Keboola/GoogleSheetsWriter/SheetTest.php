@@ -32,7 +32,7 @@ class SheetTest extends BaseTest
         // delete first sheet
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
         $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
-        $this->client->deleteSheet($gdFile['id'], $sheetId);
+        $this->client->deleteSheet((string) $gdFile['id'], (string) $sheetId);
 
         $sheetConfig = [
             'id' => 0,

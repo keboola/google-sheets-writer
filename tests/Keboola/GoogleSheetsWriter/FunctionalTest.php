@@ -517,7 +517,7 @@ class FunctionalTest extends BaseTest
         // delete first sheet
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
         $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
-        $this->client->deleteSheet($gdFile['id'], $sheetId);
+        $this->client->deleteSheet((string) $gdFile['id'], (string) $sheetId);
 
         // run
         $config = $this->prepareConfig();
@@ -558,6 +558,7 @@ class FunctionalTest extends BaseTest
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
         $response = json_decode($process->getOutput(), true);
+
         $gdFile = (array) $this->client->getSpreadsheet($response['spreadsheet']['spreadsheetId']);
         $this->assertArrayHasKey('spreadsheetId', $gdFile);
         $this->assertEquals('titanic', $gdFile['properties']['title']);
@@ -770,7 +771,7 @@ class FunctionalTest extends BaseTest
     {
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
 
-        $process = new Process(sprintf('php run.php --data=%s', $this->tmpDataPath));
+        $process = new Process(['php', 'run.php', sprintf('--data=%s', $this->tmpDataPath)]);
         $process->setTimeout(300);
         $process->run();
 

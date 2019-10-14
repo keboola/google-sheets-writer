@@ -114,7 +114,7 @@ class Writer
                 ],
             ]
         );
-        $this->logger->info('add sheet', [
+        $this->logger->debug('add sheet', [
             'response' => $addSheetResponse,
         ]);
 
@@ -124,8 +124,8 @@ class Writer
     public function deleteSheet(array $sheet) : array
     {
         return $this->driveApi->deleteSheet(
-            $sheet['fileId'],
-            $sheet['sheetId']
+            (string) $sheet['fileId'],
+            (string) $sheet['sheetId']
         );
     }
 }

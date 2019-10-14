@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8df8505bc714d1cfab05fa0b66247bc0",
+    "content-hash": "6546124bebc52410deba68a98931fbb2",
     "packages": [
         {
             "name": "graylog2/gelf-php",
@@ -295,16 +295,16 @@
         },
         {
             "name": "keboola/google-client-bundle",
-            "version": "5.0.0",
+            "version": "5.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/google-client-bundle.git",
-                "reference": "02d690d36a6710bfbb02a79f7aac09af6f397e91"
+                "reference": "ce3e0c27d5d27c398425d2924aaba528ad5526ae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/google-client-bundle/zipball/02d690d36a6710bfbb02a79f7aac09af6f397e91",
-                "reference": "02d690d36a6710bfbb02a79f7aac09af6f397e91",
+                "url": "https://api.github.com/repos/keboola/google-client-bundle/zipball/ce3e0c27d5d27c398425d2924aaba528ad5526ae",
+                "reference": "ce3e0c27d5d27c398425d2924aaba528ad5526ae",
                 "shasum": ""
             },
             "require": {
@@ -331,7 +331,7 @@
             ],
             "authors": [
                 {
-                    "name": "Miroslav Cillik",
+                    "name": "Miroslav Čillík",
                     "email": "miro@keboola.com"
                 }
             ],
@@ -342,7 +342,7 @@
                 "keboola",
                 "rest"
             ],
-            "time": "2019-01-11T14:02:43+00:00"
+            "time": "2019-10-14T11:02:52+00:00"
         },
         {
             "name": "keboola/google-sheets-client",
