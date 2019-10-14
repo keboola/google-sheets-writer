@@ -81,14 +81,14 @@ class Writer
 
     public function getSpreadsheet(string $fileId) : array
     {
-        return (array) $this->driveApi->getSpreadsheet($fileId);
+        return $this->driveApi->getSpreadsheet($fileId);
     }
 
     public function createSpreadsheet(array $file) : array
     {
         $gdFile = $this->createFileMetadata($file);
 
-        return (array) $this->driveApi->getSpreadsheet($gdFile['id']);
+        return $this->driveApi->getSpreadsheet($gdFile['id']);
     }
 
     public function addSheet(array $sheet) : array

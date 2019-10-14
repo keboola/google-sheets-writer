@@ -559,7 +559,7 @@ class FunctionalTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
         $response = json_decode($process->getOutput(), true);
 
-        $gdFile = (array) $this->client->getSpreadsheet($response['spreadsheet']['spreadsheetId']);
+        $gdFile = $this->client->getSpreadsheet($response['spreadsheet']['spreadsheetId']);
         $this->assertArrayHasKey('spreadsheetId', $gdFile);
         $this->assertEquals('titanic', $gdFile['properties']['title']);
 
@@ -585,10 +585,8 @@ class FunctionalTest extends BaseTest
         $response = json_decode($process->getOutput(), true);
         $this->assertEquals('error', $response['status']);
         $this->assertEquals('User Error', $response['error']);
-        $this->assertContains('File or folder not found.', $response['message']);
+        $this->assertStringContainsString('File or folder not found.', $response['message']);
     }
-
-
 
     /**
      * Add Sheet to a Spreadsheet using sync action
