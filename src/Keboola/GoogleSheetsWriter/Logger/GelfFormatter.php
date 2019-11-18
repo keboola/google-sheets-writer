@@ -11,9 +11,10 @@ class GelfFormatter extends GelfMessageFormatter
 {
     /**
      * @param CsvFile $data
+     * @param int $depth
      * @return array|string
      */
-    protected function normalize($data)
+    protected function normalize($data, $depth = 0)
     {
         if ($data instanceof CsvFile) {
             return "csv file: " . $data->getFilename();

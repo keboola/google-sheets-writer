@@ -81,14 +81,14 @@ class Writer
 
     public function getSpreadsheet(string $fileId) : array
     {
-        return (array) $this->driveApi->getSpreadsheet($fileId);
+        return $this->driveApi->getSpreadsheet($fileId);
     }
 
     public function createSpreadsheet(array $file) : array
     {
         $gdFile = $this->createFileMetadata($file);
 
-        return (array) $this->driveApi->getSpreadsheet($gdFile['id']);
+        return $this->driveApi->getSpreadsheet($gdFile['id']);
     }
 
     public function addSheet(array $sheet) : array
@@ -114,7 +114,7 @@ class Writer
                 ],
             ]
         );
-        $this->logger->info('add sheet', [
+        $this->logger->debug('add sheet', [
             'response' => $addSheetResponse,
         ]);
 
@@ -124,8 +124,8 @@ class Writer
     public function deleteSheet(array $sheet) : array
     {
         return $this->driveApi->deleteSheet(
-            $sheet['fileId'],
-            $sheet['sheetId']
+            (string) $sheet['fileId'],
+            (string) $sheet['sheetId']
         );
     }
 }

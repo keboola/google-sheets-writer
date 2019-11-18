@@ -1,5 +1,7 @@
-FROM php:7.2-cli
+FROM php:7.3-cli
 MAINTAINER Miro Cillik <miro@keboola.com>
+
+ENV COMPOSER_PROCESS_TIMEOUT=600
 
 # Deps
 RUN apt-get update
