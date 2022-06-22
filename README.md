@@ -1,12 +1,8 @@
 # Google Sheets API Writer
 
-[![Docker Repository on Quay](https://quay.io/repository/keboola/google-sheets-writer/status "Docker Repository on Quay")](https://quay.io/repository/keboola/google-sheets-writer)
-[![Build Status](https://travis-ci.org/keboola/google-sheets-writer.svg?branch=master)](https://travis-ci.org/keboola/google-sheets-writer)
-[![Code Climate](https://codeclimate.com/github/keboola/google-sheets-writer/badges/gpa.svg)](https://codeclimate.com/github/keboola/google-sheets-writer)
-[![Test Coverage](https://codeclimate.com/github/keboola/google-sheets-writer/badges/coverage.svg)](https://codeclimate.com/github/keboola/google-sheets-writer/coverage)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/keboola/google-sheets-writer/blob/master/LICENSE.md)
 
-Writes data into Goole Drive files and spreadsheets.
+Writes data into Google Drive files and spreadsheets.
 
 ## Example configuration
 
@@ -21,7 +17,7 @@ Note that this writer is using [Keboola OAuth Bundle](https://github.com/keboola
 1. Create application in Google Developer console.
 
 - Enable APIs: `Google Drive API`, ` Google Sheets API`
-- Go to `Credentials` section and create new credentials of type `OAuth Client ID`. Use `https://SYRUP_INSTANCE.keboola.com/oauth-v2/authorize/keboola.ex-google-drive/callback` as redirec URI.
+- Go to `Credentials` section and create new credentials of type `OAuth Client ID`. Use `https://SYRUP_INSTANCE.keboola.com/oauth-v2/authorize/keboola.ex-google-drive/callback` as redirect URI.
 
 2. Register application in Keboola Oauth [http://docs.oauthv2.apiary.io/#reference/manage/addlist-supported-api/add-new-component](http://docs.oauthv2.apiary.io/#reference/manage/addlist-supported-api/add-new-component)
 
@@ -44,10 +40,10 @@ App is developed on localhost using TDD.
 
 1. Clone from repository: `git clone git@github.com:keboola/google-sheets-writer.git`
 2. Change directory: `cd google-sheets-writer`
-3. Install dependencies: `composer install --no-interaction`
-4. Create `tests.sh` file from template `tests.sh.template`. 
+3. Install dependencies: `docker-compose run --rm dev composer install`
+4. Create `.env` file from template `.env.dist`. 
 5. You will need working OAuth credentials. 
     - Go to Googles [OAuth 2.0 Playground](https://developers.google.com/oauthplayground). 
     - In the configuration (the cog wheel on the top right side) check `Use your own OAuth credentials` and paste your OAuth Client ID and Secret.
-    - Go through the authorization flow and generate `Access` and `Refresh` tokens. Copy and paste them into the `tests.sh` file.    
-6. Run the tests: `./tests.sh`
+    - Go through the authorization flow and generate `Access` and `Refresh` tokens. Copy and paste them into the `.env` file.    
+6. Run the tests: `docker-compose run --rm dev composer tests`
