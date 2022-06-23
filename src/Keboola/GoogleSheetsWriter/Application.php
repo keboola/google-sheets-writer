@@ -96,9 +96,9 @@ class Application
             if ($e->getCode() >= 500 && $e->getCode() < 600) {
                 throw new UserException("Google API error: " . $e->getMessage(), $e->getCode(), $e);
             }
-            throw new ApplicationException($e->getMessage(), 500, $e, [
-                'response' => $e->getResponse()->getBody()->getContents(),
-            ]);
+
+            $response = $e->getResponse() !== null ? ['response' => $e->getResponse()->getBody()->getContents()] : [];
+            throw new ApplicationException($e->getMessage(), 500, $e, $response);
         }
     }
 
