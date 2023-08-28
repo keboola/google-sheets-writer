@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter;
 
+use Generator;
 use Keboola\Csv\CsvFile;
 use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Test\BaseTest;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 class FunctionalTest extends BaseTest
@@ -774,5 +776,66 @@ class FunctionalTest extends BaseTest
         $process->run();
 
         return $process;
+    }
+
+    /**
+     * @dataProvider provideMissingOauthConfig
+     */
+    public function testMissingOauth(array $config) : void
+    {
+        $fs = new Filesystem();
+        $fs->remove($this->tmpDataPath);
+        $fs->mkdir($this->tmpDataPath);
+        $process = $this->runProcess($config);
+        $this->assertEquals(1, $process->getExitCode());
+        $this->assertStringContainsString(
+            'Missing authorization data',
+            $process->getErrorOutput(),
+            $process->getOutput()
+        );
+    }
+
+    public function provideMissingOauthConfig(): Generator
+    {
+        $parameters = [
+            'parameters' => [
+                'data_dir' => $this->dataPath,
+                'tables' => [[
+                    'id' => 0,
+                    'title' => 'titanic',
+                    'fileId' => 1,
+                    'enabled' => true,
+                    'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+                    'action' => ConfigDefinition::ACTION_UPDATE,
+                ]],
+            ],
+        ];
+
+        yield 'missing authorization' => [$parameters];
+
+        yield 'missing oauth_api' => [$parameters, 'authorization' => []];
+
+        yield 'missing credentials' => [$parameters, 'authorization' => ['oauth_api' => []]];
+
+        yield 'missing data' => [$parameters, 'authorization' => ['oauth_api' => ['credentials' => [
+            'appKey' => getenv('CLIENT_ID'),
+            '#appSecret' => getenv('CLIENT_SECRET'),
+        ]]]];
+
+        yield 'missing appKey' => [$parameters, 'authorization' => ['oauth_api' => ['credentials' => [
+            '#appSecret' => getenv('CLIENT_SECRET'),
+            '#data' => json_encode([
+                'access_token' => getenv('ACCESS_TOKEN'),
+                'refresh_token' => getenv('REFRESH_TOKEN'),
+            ]),
+        ]]]];
+
+        yield 'missing appSecret' => [$parameters, 'authorization' => ['oauth_api' => ['credentials' => [
+            'appKey' => getenv('CLIENT_ID'),
+            '#data' => json_encode([
+                'access_token' => getenv('ACCESS_TOKEN'),
+                'refresh_token' => getenv('REFRESH_TOKEN'),
+            ]),
+        ]]]];
     }
 }

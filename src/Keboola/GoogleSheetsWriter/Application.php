@@ -24,23 +24,29 @@ class Application
     public function __construct(array $config, Logger $logger)
     {
         $container = new Container();
-        $container['action'] = isset($config['action'])?$config['action']:'run';
+        $container['action'] = $config['action'] ?? 'run';
         $container['logger'] = function () use ($logger) {
             return $logger;
         };
+
         $container['parameters'] = $this->validateParameters($config['parameters']);
-        if (empty($config['authorization'])) {
+        if (!isset($config['authorization']['oauth_api']['credentials'])) {
             throw new UserException('Missing authorization data');
         }
-        $tokenData = json_decode($config['authorization']['oauth_api']['credentials']['#data'], true);
-        $container['google_client'] = function ($container) use ($config, $tokenData) {
+        $credentials = $config['authorization']['oauth_api']['credentials'];
+        if (!isset($credentials['#data']) || !isset($credentials['appKey']) || !isset($credentials['#appSecret'])) {
+            throw new UserException('Missing authorization data');
+        }
+
+        $tokenData = json_decode($credentials['#data'], true);
+        $container['google_client'] = function ($container) use ($credentials, $tokenData) {
             $retries = 7;
             if ($container['action'] !== 'run') {
                 $retries = 2;
             }
             $api = new RestApi(
-                $config['authorization']['oauth_api']['credentials']['appKey'],
-                $config['authorization']['oauth_api']['credentials']['#appSecret'],
+                $credentials['appKey'],
+                $credentials['#appSecret'],
                 $tokenData['access_token'],
                 $tokenData['refresh_token'],
                 $container['logger']
