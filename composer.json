@@ -48,5 +48,10 @@
       "@composer validate --no-check-publish --no-check-all",
       "@build"
     ]
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
   }
 }
