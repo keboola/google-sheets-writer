@@ -7,13 +7,11 @@ namespace Keboola\GoogleSheetsWriter\Input;
 class Page
 {
     /** @var array */
-    private $values;
+    private array $values;
 
-    /** @var int */
-    private $offset;
+    private int $offset;
 
-    /** @var int */
-    private $limit;
+    private int $limit;
 
     public function __construct(array $values, int $offset, int $limit)
     {

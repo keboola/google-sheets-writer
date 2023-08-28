@@ -6,11 +6,11 @@ namespace Keboola\GoogleSheetsWriter;
 
 use GuzzleHttp\Exception\RequestException;
 use Keboola\Google\ClientBundle\Google\RestApi;
+use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
-use Keboola\GoogleSheetsClient\Client;
 use Monolog\Logger;
 use Pimple\Container;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -18,8 +18,7 @@ use Symfony\Component\Config\Definition\Processor;
 
 class Application
 {
-    /** @var Container */
-    private $container;
+    private Container $container;
 
     public function __construct(array $config, Logger $logger)
     {
@@ -73,7 +72,7 @@ class Application
         $this->container = $container;
     }
 
-    public function run() : array
+    public function run(): array
     {
         $actionMethod = $this->container['action'] . 'Action';
         if (!method_exists($this, $actionMethod)) {
@@ -83,24 +82,24 @@ class Application
         try {
             return $this->$actionMethod();
         } catch (RequestException $e) {
-            if ($e->getCode() == 401) {
-                throw new UserException("Expired or wrong credentials, please reauthorize.", $e->getCode(), $e);
+            if ($e->getCode() === 401) {
+                throw new UserException('Expired or wrong credentials, please reauthorize.', $e->getCode(), $e);
             }
-            if ($e->getCode() == 403) {
-                if (strtolower($e->getResponse()->getReasonPhrase()) == 'forbidden') {
+            if ($e->getCode() === 403) {
+                if (strtolower($e->getResponse()->getReasonPhrase()) === 'forbidden') {
                     $this->container['logger']->warning("You don't have access to Google Drive resource.");
                     return [];
                 }
-                throw new UserException("Reason: " . $e->getResponse()->getReasonPhrase(), $e->getCode(), $e);
+                throw new UserException('Reason: ' . $e->getResponse()->getReasonPhrase(), $e->getCode(), $e);
             }
-            if ($e->getCode() == 404) {
+            if ($e->getCode() === 404) {
                 throw new UserException('File or folder not found. ' . $e->getMessage(), $e->getCode(), $e);
             }
-            if ($e->getCode() == 400) {
+            if ($e->getCode() === 400) {
                 throw new UserException($e->getMessage());
             }
             if ($e->getCode() >= 500 && $e->getCode() < 600) {
-                throw new UserException("Google API error: " . $e->getMessage(), $e->getCode(), $e);
+                throw new UserException('Google API error: ' . $e->getMessage(), $e->getCode(), $e);
             }
 
             $response = $e->getResponse() !== null ? ['response' => $e->getResponse()->getBody()->getContents()] : [];
@@ -108,7 +107,7 @@ class Application
         }
     }
 
-    protected function runAction() : array
+    protected function runAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -119,7 +118,7 @@ class Application
         ];
     }
 
-    protected function getSpreadsheetAction() : array
+    protected function getSpreadsheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -131,7 +130,7 @@ class Application
         ];
     }
 
-    protected function createSpreadsheetAction() : array
+    protected function createSpreadsheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -143,7 +142,7 @@ class Application
         ];
     }
 
-    protected function addSheetAction() : array
+    protected function addSheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -155,7 +154,7 @@ class Application
         ];
     }
 
-    protected function deleteSheetAction() : array
+    protected function deleteSheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
@@ -166,7 +165,7 @@ class Application
         ];
     }
 
-    private function validateParameters(array $parameters) : array
+    private function validateParameters(array $parameters): array
     {
         try {
             $processor = new Processor();

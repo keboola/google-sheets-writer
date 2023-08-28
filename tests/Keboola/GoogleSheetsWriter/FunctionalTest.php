@@ -14,7 +14,7 @@ use Symfony\Component\Process\Process;
 
 class FunctionalTest extends BaseTest
 {
-    public function setUp() : void
+    public function setUp(): void
     {
         parent::setUp();
         $testFiles = $this->client->listFiles("name contains 'titanic' and trashed != true");
@@ -26,7 +26,7 @@ class FunctionalTest extends BaseTest
     /**
      * Create or update a sheet
      */
-    public function testUpdateSpreadsheet() : void
+    public function testUpdateSpreadsheet(): void
     {
         $this->prepareDataFiles();
 
@@ -71,7 +71,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testUpdateSpreadsheetWithStringId() : void
+    public function testUpdateSpreadsheetWithStringId(): void
     {
         $this->prepareDataFiles();
 
@@ -117,7 +117,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testUpdateSpreadsheetInTeamDrive() : void
+    public function testUpdateSpreadsheetInTeamDrive(): void
     {
         $this->prepareDataFiles();
 
@@ -162,7 +162,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testUpdateSpreadsheetDisabled() : void
+    public function testUpdateSpreadsheetDisabled(): void
     {
         $this->prepareDataFiles();
 
@@ -205,7 +205,7 @@ class FunctionalTest extends BaseTest
         $this->assertEquals($modified['modifiedTime'], $modified2['modifiedTime']);
     }
 
-    public function testUpdateSpreadsheetLong() : void
+    public function testUpdateSpreadsheetLong(): void
     {
         $this->prepareDataFiles();
 
@@ -267,7 +267,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testUpdateSpreadsheetWide() : void
+    public function testUpdateSpreadsheetWide(): void
     {
         $this->prepareDataFiles();
 
@@ -359,7 +359,7 @@ class FunctionalTest extends BaseTest
     /**
      * Append content to a sheet
      */
-    public function testAppendSheet() : void
+    public function testAppendSheet(): void
     {
         $this->prepareDataFiles();
 
@@ -405,7 +405,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testAppendSheetLarge() : void
+    public function testAppendSheetLarge(): void
     {
         $this->prepareDataFiles();
 
@@ -461,7 +461,7 @@ class FunctionalTest extends BaseTest
         $this->assertCount(3001, $response['values']);
     }
 
-    public function testAppendToEmptySheet() : void
+    public function testAppendToEmptySheet(): void
     {
         $this->prepareDataFiles();
 
@@ -495,12 +495,15 @@ class FunctionalTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
 
         $response = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
-        $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2_append.csv'), $response['values']);
+        $this->assertEquals(
+            $this->csvToArray($this->dataPath . '/in/tables/titanic_2_append.csv'),
+            $response['values']
+        );
 
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testSheetNotFoundException() : void
+    public function testSheetNotFoundException(): void
     {
         $this->prepareDataFiles();
 
@@ -543,7 +546,7 @@ class FunctionalTest extends BaseTest
     /**
      * Create New Spreadsheet using sync action
      */
-    public function testSyncActionCreateSpreadsheet() : void
+    public function testSyncActionCreateSpreadsheet(): void
     {
         $this->prepareDataFiles();
 
@@ -568,7 +571,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($response['spreadsheet']['spreadsheetId']);
     }
 
-    public function testSyncActionCreateSpreadsheet404() : void
+    public function testSyncActionCreateSpreadsheet404(): void
     {
         $this->prepareDataFiles();
 
@@ -593,7 +596,7 @@ class FunctionalTest extends BaseTest
     /**
      * Add Sheet to a Spreadsheet using sync action
      */
-    public function testSyncActionAddSheet() : void
+    public function testSyncActionAddSheet(): void
     {
         $this->prepareDataFiles();
 
@@ -637,7 +640,7 @@ class FunctionalTest extends BaseTest
      * Add Sheet with same title to a Spreadsheet using sync action
      * This will return the existing sheet resource
      */
-    public function testSyncActionAddSheetExisting() : void
+    public function testSyncActionAddSheetExisting(): void
     {
         $this->prepareDataFiles();
 
@@ -678,7 +681,7 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    public function testSyncActionDeleteSheet() : void
+    public function testSyncActionDeleteSheet(): void
     {
         $this->prepareDataFiles();
 
@@ -730,7 +733,7 @@ class FunctionalTest extends BaseTest
     /**
      * Create New Spreadsheet using sync action
      */
-    public function testSyncActionGetSpreadsheet() : void
+    public function testSyncActionGetSpreadsheet(): void
     {
         $this->prepareDataFiles();
 
@@ -765,9 +768,8 @@ class FunctionalTest extends BaseTest
 
     /**
      * @param array $config
-     * @return Process
      */
-    private function runProcess(array $config) : Process
+    private function runProcess(array $config): Process
     {
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
 
@@ -781,7 +783,7 @@ class FunctionalTest extends BaseTest
     /**
      * @dataProvider provideMissingOauthConfig
      */
-    public function testMissingOauth(array $config) : void
+    public function testMissingOauth(array $config): void
     {
         $fs = new Filesystem();
         $fs->remove($this->tmpDataPath);

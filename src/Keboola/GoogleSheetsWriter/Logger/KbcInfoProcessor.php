@@ -8,7 +8,7 @@ use Monolog\Logger;
 
 class KbcInfoProcessor
 {
-    public function __invoke(array $record) : array
+    public function __invoke(array $record): array
     {
         if ($record['level'] === Logger::DEBUG) {
             $record['context'] = array_merge(

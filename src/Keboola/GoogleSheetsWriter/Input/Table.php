@@ -8,20 +8,15 @@ use Keboola\Csv\CsvFile;
 
 class Table
 {
-    /** @var string */
-    private $dataDir;
+    private string $dataDir;
 
-    /** @var string */
-    private $tableId;
+    private string $tableId;
 
-    /** @var CsvFile */
-    private $csvFile;
+    private CsvFile $csvFile;
 
-    /** @var int */
-    private $rowCount;
+    private int $rowCount;
 
-    /** @var int */
-    private $columnCount;
+    private int $columnCount;
 
     public function __construct(string $dataDir, string $tableId)
     {
@@ -32,27 +27,27 @@ class Table
         $this->columnCount = $this->csvFile->getColumnsCount();
     }
 
-    public function getPathname() : string
+    public function getPathname(): string
     {
         return sprintf('%s/in/tables/%s.csv', $this->dataDir, $this->tableId);
     }
 
-    public function getCsvFile() : CsvFile
+    public function getCsvFile(): CsvFile
     {
         return $this->csvFile;
     }
 
-    public function getRowCount() : int
+    public function getRowCount(): int
     {
         return $this->rowCount;
     }
 
-    public function getColumnCount() : int
+    public function getColumnCount(): int
     {
         return $this->columnCount;
     }
 
-    private function countLines() : int
+    private function countLines(): int
     {
         $csvFile = clone $this->csvFile;
         $cnt = iterator_count($csvFile);

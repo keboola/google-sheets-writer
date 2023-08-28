@@ -13,7 +13,7 @@ use Monolog\Logger;
 
 class HandlerFactory
 {
-    public static function getGelfHandlers() : array
+    public static function getGelfHandlers(): array
     {
         $transport = new TcpTransport(getenv('KBC_LOGGER_ADDR'), getenv('KBC_LOGGER_PORT'));
         $gelfHandler = new GelfHandler(new Publisher($transport, new MessageValidator()));
@@ -21,7 +21,7 @@ class HandlerFactory
         return [$gelfHandler];
     }
 
-    public static function getStderrHandlers() : array
+    public static function getStderrHandlers(): array
     {
         return [
             self::getCriticalHandler(),

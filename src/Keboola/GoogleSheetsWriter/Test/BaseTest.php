@@ -12,14 +12,11 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class BaseTest extends TestCase
 {
-    /** @var string */
-    protected $dataPath = __DIR__ . '/../../../../tests/data';
+    protected string $dataPath = __DIR__ . '/../../../../tests/data';
 
-    /** @var string */
-    protected $tmpDataPath = '/tmp/data-test';
+    protected string $tmpDataPath = '/tmp/data-test';
 
-    /** @var Client */
-    protected $client;
+    protected Client $client;
 
     public function setUp(): void
     {
@@ -30,7 +27,7 @@ class BaseTest extends TestCase
         $this->client->setTeamDriveSupport(true);
     }
 
-    protected function prepareConfig() : array
+    protected function prepareConfig(): array
     {
         $config['parameters']['data_dir'] = $this->dataPath;
         $config['authorization']['oauth_api']['credentials'] = [
@@ -45,7 +42,7 @@ class BaseTest extends TestCase
         return $config;
     }
 
-    protected function csvToArray(string $pathname) : array
+    protected function csvToArray(string $pathname): array
     {
         $values = [];
         $csvFile = new CsvFile($pathname);
@@ -58,7 +55,7 @@ class BaseTest extends TestCase
         return $values;
     }
 
-    protected function prepareDataFiles() : void
+    protected function prepareDataFiles(): void
     {
         $fs = new Filesystem();
         $fs->remove($this->tmpDataPath);

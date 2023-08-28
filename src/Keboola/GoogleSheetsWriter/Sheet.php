@@ -5,25 +5,22 @@ declare(strict_types=1);
 namespace Keboola\GoogleSheetsWriter;
 
 use GuzzleHttp\Exception\ClientException;
+use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
 use Keboola\GoogleSheetsWriter\Input\Page;
 use Keboola\GoogleSheetsWriter\Input\Paginator;
 use Keboola\GoogleSheetsWriter\Input\Table;
-use Keboola\GoogleSheetsClient\Client;
 use Monolog\Logger;
 
 class Sheet
 {
-    /** @var Client */
-    private $client;
+    private Client $client;
 
-    /** @var Table */
-    private $inputTable;
+    private Table $inputTable;
 
-    /** @var Logger */
-    private $logger;
+    private Logger $logger;
 
     public function __construct(Client $client, Table $inputTable, Logger $logger)
     {
@@ -90,7 +87,7 @@ class Sheet
 
     private function updateAction(array $sheet, Table $inputTable): array
     {
-        $this->logger->info("Updating values", ['sheet' => $sheet]);
+        $this->logger->info('Updating values', ['sheet' => $sheet]);
 
         $responses = [];
         $paginator = new Paginator($inputTable);
@@ -120,7 +117,7 @@ class Sheet
 
     private function appendAction(array $sheet, Table $inputTable): array
     {
-        $this->logger->info("Appending values", ['sheet' => $sheet]);
+        $this->logger->info('Appending values', ['sheet' => $sheet]);
 
         $responses = [];
         $paginator = new Paginator($inputTable);
@@ -206,7 +203,7 @@ class Sheet
         return $this->findSheetPropertiesById($spreadsheet['sheets'], $sheetId);
     }
 
-    private function findSheetPropertiesById(array $sheets, int $sheetId) : array
+    private function findSheetPropertiesById(array $sheets, int $sheetId): array
     {
         $results = array_filter($sheets, function ($item) use ($sheetId) {
             return $sheetId === (int) $item['properties']['sheetId'];
@@ -229,7 +226,7 @@ class Sheet
         return urlencode($sheetTitle) . '!' . $start . ':' . $end;
     }
 
-    public function columnToLetter(int $column) : string
+    public function columnToLetter(int $column): string
     {
         $alphas = range('A', 'Z');
         $letter = '';
@@ -246,9 +243,9 @@ class Sheet
     public function validateRowCount(int $rowCountSrc, int $rowCountUpdated, array $sheet): void
     {
         $isAppend = $sheet['action'] === ConfigDefinition::ACTION_APPEND;
-        $commonCondition = $rowCountSrc == $rowCountUpdated;
+        $commonCondition = $rowCountSrc === $rowCountUpdated;
         // header is omitted when appending to non-empty file
-        $appendCondition = $isAppend && (($rowCountSrc - 1 == $rowCountUpdated) || $rowCountSrc == $rowCountUpdated);
+        $appendCondition = $isAppend && (($rowCountSrc - 1 === $rowCountUpdated) || $rowCountSrc === $rowCountUpdated);
 
         if (!$commonCondition && !$appendCondition) {
             throw new UserException(sprintf(

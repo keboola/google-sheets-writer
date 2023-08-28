@@ -6,15 +6,14 @@ namespace Keboola\GoogleSheetsWriter\Input;
 
 class TableFactory
 {
-    /** @var string */
-    private $dataDir;
+    private string $dataDir;
 
     public function __construct(string $dataDir)
     {
         $this->dataDir = $dataDir;
     }
 
-    public function getTable(string $tableId) : Table
+    public function getTable(string $tableId): Table
     {
         return new Table($this->dataDir, $tableId);
     }

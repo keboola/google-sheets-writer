@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Input;
 
+use Generator;
+
 class Paginator
 {
-    /** @var Table */
-    protected $inputTable;
+    protected Table $inputTable;
 
-    /** @var int */
-    protected $limit;
+    protected int $limit;
 
-    /** @var int */
-    protected $offset = 1;
+    protected int $offset = 1;
 
     public function __construct(Table $inputTable, int $limit = 5000)
     {
@@ -22,7 +21,7 @@ class Paginator
     }
 
     /** @return \Generator|Page[] */
-    public function pages(): \Generator
+    public function pages(): Generator
     {
         $csvFile = $this->inputTable->getCsvFile();
         while ($csvFile->current()) {
