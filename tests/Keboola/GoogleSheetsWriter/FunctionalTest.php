@@ -158,8 +158,6 @@ class FunctionalTest extends BaseTest
         $this->assertEquals('titanic', $response['properties']['title']);
         $this->assertEquals('casualties', $response['sheets'][0]['properties']['title']);
         $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
-
-        $this->client->deleteFile($gdFile['id']);
     }
 
     public function testUpdateSpreadsheetDisabled(): void
