@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter;
 
-use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Keboola\GoogleSheetsClient\Client;
+use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 
 class Writer
 {
-    /** @var Client */
-    private $driveApi;
+    private Client $driveApi;
 
-    /** @var TableFactory */
-    private $input;
+    private TableFactory $input;
 
-    /** @var Logger */
-    private $logger;
+    private Logger $logger;
 
     public function __construct(Client $driveApi, TableFactory $input, Logger $logger)
     {
@@ -31,15 +28,15 @@ class Writer
         });
     }
 
-    public function getBackoffCallback403() : callable
+    public function getBackoffCallback403(): callable
     {
         return function ($response) {
             /** @var ResponseInterface $response */
             $reason = $response->getReasonPhrase();
 
-            if ($reason == 'insufficientPermissions'
-                || $reason == 'dailyLimitExceeded'
-                || $reason == 'usageLimits.userRateLimitExceededUnreg'
+            if ($reason === 'insufficientPermissions'
+                || $reason === 'dailyLimitExceeded'
+                || $reason === 'usageLimits.userRateLimitExceededUnreg'
             ) {
                 return false;
             }
@@ -68,7 +65,7 @@ class Writer
         }
     }
 
-    public function createFileMetadata(array $file) : array
+    public function createFileMetadata(array $file): array
     {
         $params = [
             'mimeType' => Client::MIME_TYPE_SPREADSHEET,
@@ -79,19 +76,19 @@ class Writer
         return $this->driveApi->createFileMetadata($file['title'], $params);
     }
 
-    public function getSpreadsheet(string $fileId) : array
+    public function getSpreadsheet(string $fileId): array
     {
         return $this->driveApi->getSpreadsheet($fileId);
     }
 
-    public function createSpreadsheet(array $file) : array
+    public function createSpreadsheet(array $file): array
     {
         $gdFile = $this->createFileMetadata($file);
 
         return $this->driveApi->getSpreadsheet($gdFile['id']);
     }
 
-    public function addSheet(array $sheet) : array
+    public function addSheet(array $sheet): array
     {
         $this->logger->debug('Add Sheet action');
         $spreadsheet = $this->driveApi->getSpreadsheet($sheet['fileId']);
@@ -101,7 +98,7 @@ class Writer
             ],
         ]);
         foreach ($spreadsheet['sheets'] as $gdSheet) {
-            if ($gdSheet['properties']['title'] == $sheet['sheetTitle']) {
+            if ($gdSheet['properties']['title'] === $sheet['sheetTitle']) {
                 return $gdSheet['properties'];
             }
         }
@@ -121,7 +118,7 @@ class Writer
         return $addSheetResponse['replies'][0]['addSheet']['properties'];
     }
 
-    public function deleteSheet(array $sheet) : array
+    public function deleteSheet(array $sheet): array
     {
         return $this->driveApi->deleteSheet(
             (string) $sheet['fileId'],

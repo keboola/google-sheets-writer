@@ -1,25 +1,6 @@
 version: "2"
 services:
-  dev:
-    build: .
-    image: keboola/google-sheets-writer
-    volumes:
-      - .:/code
-    working_dir: /code
-    command: bash
-    environment:
-      CLIENT_ID: ${CLIENT_ID}
-      CLIENT_SECRET: ${CLIENT_SECRET}
-      ACCESS_TOKEN: ${ACCESS_TOKEN}
-      REFRESH_TOKEN: ${REFRESH_TOKEN}
-      GOOGLE_DRIVE_FOLDER: ${GOOGLE_DRIVE_FOLDER}
-      GOOGLE_DRIVE_TEAM_FOLDER: ${GOOGLE_DRIVE_TEAM_FOLDER}
-      KBC_LOGGER_ADDR: log-server
-      KBC_LOGGER_PORT: 12202
-    links:
-      - log-server
-
-  tests:
+  tests: &tests
     build: .
     image: keboola/google-sheets-writer
     working_dir: /code
@@ -35,6 +16,12 @@ services:
       KBC_LOGGER_PORT: 12202
     links:
       - log-server
+
+  dev:
+    <<: *tests
+    volumes:
+      - .:/code
+    command: bash
 
   log-server:
     image: "quay.io/keboola/docs-example-logging-mock-server:master"

@@ -1,0 +1,176 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Cannot access offset 'access_token' on mixed\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Cannot access offset 'action' on Keboola\\\\GoogleSheetsWriter\\\\Application\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Cannot access offset 'fileId' on mixed\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Cannot access offset 'refresh_token' on mixed\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Cannot access offset 'tables' on mixed\\.$#"
+			count: 5
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Cannot access offset 0 on mixed\\.$#"
+			count: 4
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Cannot call method getReasonPhrase\\(\\) on Psr\\\\Http\\\\Message\\\\ResponseInterface\\|null\\.$#"
+			count: 2
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Cannot call method warning\\(\\) on mixed\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Parameter \\#1 \\$file of method Keboola\\\\GoogleSheetsWriter\\\\Writer\\:\\:createSpreadsheet\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsWriter\\\\Writer\\:\\:getSpreadsheet\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Parameter \\#1 \\$sheet of method Keboola\\\\GoogleSheetsWriter\\\\Writer\\:\\:addSheet\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Parameter \\#1 \\$sheet of method Keboola\\\\GoogleSheetsWriter\\\\Writer\\:\\:deleteSheet\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Parameter \\#1 \\$sheets of method Keboola\\\\GoogleSheetsWriter\\\\Writer\\:\\:process\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Parameter \\#3 \\$accessToken of class Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi constructor expects string, mixed given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Parameter \\#4 \\$refreshToken of class Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi constructor expects string, mixed given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Application.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Logger/GelfFormatter.php
+
+		-
+			message: "#^Parameter \\#1 \\$host of class Gelf\\\\Transport\\\\TcpTransport constructor expects string\\|null, string\\|false given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Logger/HandlerFactory.php
+
+		-
+			message: "#^Parameter \\#2 \\$port of class Gelf\\\\Transport\\\\TcpTransport constructor expects int\\|null, string\\|false given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Logger/HandlerFactory.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Logger/LineFormatter.php
+
+		-
+			message: "#^Cannot call method getBody\\(\\) on Psr\\\\Http\\\\Message\\\\ResponseInterface\\|null\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Sheet.php
+
+		-
+			message: "#^Cannot call method getReasonPhrase\\(\\) on Psr\\\\Http\\\\Message\\\\ResponseInterface\\|null\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Sheet.php
+
+		-
+			message: "#^Parameter \\#1 \\$accessToken of method Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi\\:\\:setCredentials\\(\\) expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Test/BaseTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$clientId of class Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi constructor expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Test/BaseTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$clientSecret of class Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi constructor expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Test/BaseTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$refreshToken of method Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi\\:\\:setCredentials\\(\\) expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Test/BaseTest.php
+
+		-
+			message: "#^Cannot access offset 'error' on mixed\\.$#"
+			count: 1
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Cannot access offset 'message' on mixed\\.$#"
+			count: 1
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Cannot access offset 'sheet' on mixed\\.$#"
+			count: 4
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Cannot access offset 'spreadsheet' on mixed\\.$#"
+			count: 3
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Cannot access offset 'spreadsheetId' on mixed\\.$#"
+			count: 3
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Cannot access offset 'status' on mixed\\.$#"
+			count: 2
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:deleteFile\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getSpreadsheet\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$array of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertArrayHasKey\\(\\) expects array\\|ArrayAccess, mixed given\\.$#"
+			count: 4
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$haystack of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertStringContainsString\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php

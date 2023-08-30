@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Exception;
 
-class ApplicationException extends \Exception
+use Exception;
+use Throwable;
+
+class ApplicationException extends Exception
 {
     /** @var array */
-    protected $data;
+    protected array $data;
 
-    public function __construct(string $message = "", int $code = 0, ?\Throwable $previous = null, array $data = [])
+    public function __construct(string $message = '', int $code = 0, ?Throwable $previous = null, array $data = [])
     {
         $this->setData($data);
         parent::__construct($message, $code, $previous);
@@ -17,14 +20,14 @@ class ApplicationException extends \Exception
     /**
      * @param array $data
      */
-    public function setData(array $data) : void
+    public function setData(array $data): void
     {
         $this->data = $data;
     }
     /**
      * @return array
      */
-    public function getData() : array
+    public function getData(): array
     {
         return $this->data;
     }
