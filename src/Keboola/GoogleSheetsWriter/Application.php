@@ -7,6 +7,7 @@ namespace Keboola\GoogleSheetsWriter;
 use GuzzleHttp\Exception\RequestException;
 use Keboola\Google\ClientBundle\Google\RestApi;
 use Keboola\GoogleSheetsClient\Client;
+use Keboola\GoogleSheetsWriter\Auth\ServiceAccountTokenFactory;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
@@ -24,48 +25,91 @@ class Application
     {
         $container = new Container();
         $container['action'] = $config['action'] ?? 'run';
-        $container['logger'] = function () use ($logger) {
+        $container['logger'] = static function () use ($logger) {
             return $logger;
         };
 
-        $container['parameters'] = $this->validateParameters($config['parameters']);
-        if (!isset($config['authorization']['oauth_api']['credentials'])) {
-            throw new UserException('Missing authorization data');
-        }
-        $credentials = $config['authorization']['oauth_api']['credentials'];
-        if (!isset($credentials['#data']) || !isset($credentials['appKey']) || !isset($credentials['#appSecret'])) {
-            throw new UserException('Missing authorization data');
+        // Validate params early
+        $container['parameters'] = $this->validateParameters($config['parameters'] ?? []);
+
+        // Decide auth mode: prefer Service Account if present, else OAuth
+        $saRaw   = $config['authorization']['#serviceAccountJson'] ?? $config['authorization']['serviceAccountJson'] ?? null;
+        $hasSa   = !empty($saRaw);
+        $hasOauth = isset($config['authorization']['oauth_api']['credentials']['#data']);
+
+        if (!$hasSa && !$hasOauth) {
+            throw new UserException('Missing authorization: provide either authorization.#serviceAccountJson or authorization.oauth_api.credentials.#data');
         }
 
-        $tokenData = json_decode($credentials['#data'], true);
-        $container['google_client'] = function ($container) use ($credentials, $tokenData) {
-            $retries = 7;
-            if ($container['action'] !== 'run') {
-                $retries = 2;
+        if ($hasSa) {
+            // --- Service Account path ---
+            $container['google_client'] = function ($c) use ($saRaw) {
+                $sa = is_string($saRaw) ? json_decode($saRaw, true) : $saRaw;
+                if (!is_array($sa) || empty($sa['client_email']) || empty($sa['private_key'])) {
+                    throw new UserException('Invalid Service Account JSON in authorization.#serviceAccountJson');
+                }
+
+                $scopes = [
+                    'https://www.googleapis.com/auth/drive.file',
+                    'https://www.googleapis.com/auth/spreadsheets',
+                ];
+
+                $tokenFactory = new ServiceAccountTokenFactory();
+                $accessToken = $tokenFactory->getAccessToken($sa, $scopes);
+
+                // Construct a real RestApi; pass empty appKey/appSecret/refresh_token.
+                // RestApi will use the provided access token and won’t attempt refresh (no refresh token).
+                $retries = ($c['action'] !== 'run') ? 2 : 7;
+                $api = new RestApi(
+                    '',                  // appKey (unused for SA)
+                    '',                  // appSecret (unused for SA)
+                    $accessToken,        // access token from SA
+                    '',                  // refresh_token not used for SA
+                    $c['logger']
+                );
+                $api->setBackoffsCount($retries);
+                return $api;
+            };
+        } else {
+            // --- OAuth path ---
+            $credentials = $config['authorization']['oauth_api']['credentials'];
+            if (!isset($credentials['#data'], $credentials['appKey'], $credentials['#appSecret'])) {
+                throw new UserException('Missing authorization data');
             }
-            $api = new RestApi(
-                $credentials['appKey'],
-                $credentials['#appSecret'],
-                $tokenData['access_token'],
-                $tokenData['refresh_token'],
-                $container['logger']
-            );
-            $api->setBackoffsCount($retries);
-            return $api;
-        };
-        $container['google_sheets_client'] = function ($container) {
-            $client = new Client($container['google_client']);
+            $tokenData = json_decode($credentials['#data'], true);
+            if (!$tokenData || empty($tokenData['refresh_token'])) {
+                throw new UserException('OAuth credentials are invalid: missing refresh_token.');
+            }
+
+            $container['google_client'] = function ($c) use ($credentials, $tokenData) {
+                $retries = ($c['action'] !== 'run') ? 2 : 7;
+                $api = new RestApi(
+                    (string) $credentials['appKey'],
+                    (string) $credentials['#appSecret'],
+                    (string) ($tokenData['access_token'] ?? ''),
+                    (string) $tokenData['refresh_token'],
+                    $c['logger']
+                );
+                $api->setBackoffsCount($retries);
+                return $api;
+            };
+        }
+
+        $container['google_sheets_client'] = static function ($c) {
+            $client = new Client($c['google_client']); // expects Keboola\Google\ClientBundle\Google\RestApi
             $client->setTeamDriveSupport(true);
             return $client;
         };
-        $container['input'] = function ($container) {
-            return new TableFactory($container['parameters']['data_dir']);
+
+        $container['input'] = static function ($c) {
+            return new TableFactory($c['parameters']['data_dir']);
         };
-        $container['writer'] = function ($container) {
+
+        $container['writer'] = static function ($c) {
             return new Writer(
-                $container['google_sheets_client'],
-                $container['input'],
-                $container['logger']
+                $c['google_sheets_client'],
+                $c['input'],
+                $c['logger']
             );
         };
 
@@ -76,7 +120,7 @@ class Application
     {
         $actionMethod = $this->container['action'] . 'Action';
         if (!method_exists($this, $actionMethod)) {
-            throw new UserException(sprintf("Action '%s' does not exist.", $this['action']));
+            throw new UserException(sprintf("Action '%s' does not exist.", $this->container['action']));
         }
 
         try {
@@ -86,11 +130,12 @@ class Application
                 throw new UserException('Expired or wrong credentials, please reauthorize.', $e->getCode(), $e);
             }
             if ($e->getCode() === 403) {
-                if (strtolower($e->getResponse()->getReasonPhrase()) === 'forbidden') {
+                if ($e->getResponse() && strtolower($e->getResponse()->getReasonPhrase()) === 'forbidden') {
                     $this->container['logger']->warning("You don't have access to Google Drive resource.");
                     return [];
                 }
-                throw new UserException('Reason: ' . $e->getResponse()->getReasonPhrase(), $e->getCode(), $e);
+                $reason = $e->getResponse() ? $e->getResponse()->getReasonPhrase() : 'Forbidden';
+                throw new UserException('Reason: ' . $reason, $e->getCode(), $e);
             }
             if ($e->getCode() === 404) {
                 throw new UserException('File or folder not found. ' . $e->getMessage(), $e->getCode(), $e);
@@ -102,7 +147,7 @@ class Application
                 throw new UserException('Google API error: ' . $e->getMessage(), $e->getCode(), $e);
             }
 
-            $response = $e->getResponse() !== null ? ['response' => $e->getResponse()->getBody()->getContents()] : [];
+            $response = $e->getResponse() ? ['response' => $e->getResponse()->getBody()->getContents()] : [];
             throw new ApplicationException($e->getMessage(), 500, $e, $response);
         }
     }

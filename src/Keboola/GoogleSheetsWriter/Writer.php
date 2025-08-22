@@ -48,20 +48,28 @@ class Writer
     public function process(array $sheets): void
     {
         foreach ($sheets as $sheetCfg) {
-            if ($sheetCfg['enabled']) {
-                $this->logger->info(sprintf(
-                    'Processing sheet "%s" in file "%s"',
-                    $sheetCfg['sheetTitle'],
-                    $sheetCfg['title']
-                ));
-
-                $sheetWriter = new Sheet(
-                    $this->driveApi,
-                    $this->input->getTable($sheetCfg['tableId']),
-                    $this->logger
-                );
-                $sheetWriter->process($sheetCfg);
+            if (!($sheetCfg['enabled'] ?? true)) {
+                continue;
             }
+
+            $fileLabel = $sheetCfg['title']
+                ?? $sheetCfg['fileTitle']
+                ?? ($sheetCfg['fileId'] ?? '(unknown)');
+            $sheetLabel = $sheetCfg['sheetTitle']
+                ?? ('#' . (string) ($sheetCfg['sheetId'] ?? '?'));
+
+            $this->logger->info(sprintf(
+                'Processing sheet "%s" in file "%s"',
+                $sheetLabel,
+                $fileLabel,
+            ));
+
+            $sheetWriter = new Sheet(
+                $this->driveApi,
+                $this->input->getTable($sheetCfg['tableId']),
+                $this->logger,
+            );
+            $sheetWriter->process($sheetCfg);
         }
     }
 
@@ -109,7 +117,7 @@ class Writer
                 'properties' => [
                     'title' => $sheet['sheetTitle'],
                 ],
-            ]
+            ],
         );
         $this->logger->debug('add sheet', [
             'response' => $addSheetResponse,
@@ -122,7 +130,7 @@ class Writer
     {
         return $this->driveApi->deleteSheet(
             (string) $sheet['fileId'],
-            (string) $sheet['sheetId']
+            (string) $sheet['sheetId'],
         );
     }
 }
