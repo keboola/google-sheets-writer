@@ -4,79 +4,93 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Auth;
 
-use GuzzleHttp\Client as GuzzleClient;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
 
-final class ServiceAccountTokenFactory
+class ServiceAccountTokenFactory
 {
-    /** @param array<string, mixed> $serviceAccount */
+    /**
+     * @param array<string,mixed> $serviceAccount
+     * @param list<string> $scopes
+     */
     public function getAccessToken(array $serviceAccount, array $scopes): string
     {
-        $this->assertSa($serviceAccount);
-
-        $aud = isset($serviceAccount['token_uri']) && is_string($serviceAccount['token_uri'])
-            ? $serviceAccount['token_uri']
-            : 'https://oauth2.googleapis.com/token';
+        $clientEmail = $this->expectString($serviceAccount['client_email'] ?? null, 'client_email');
+        $privateKey  = $this->expectString($serviceAccount['private_key'] ?? null, 'private_key');
+        $tokenUri    = $this->expectString($serviceAccount['token_uri'] ?? 'https://oauth2.googleapis.com/token', 'token_uri');
 
         $now = time();
-        $jwtHeader  = ['alg' => 'RS256', 'typ' => 'JWT'];
-        $jwtClaims  = [
-            'iss'   => (string) $serviceAccount['client_email'],
+        $jwtHeader   = $this->b64(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+        $jwtPayload  = $this->b64(json_encode([
+            'iss'   => $clientEmail,
             'scope' => implode(' ', $scopes),
-            'aud'   => $aud,
-            'exp'   => $now + 3600,
+            'aud'   => $tokenUri,
             'iat'   => $now,
-        ];
+            'exp'   => $now + 3600,
+        ]));
 
-        $jwt = $this->encodeJwt($jwtHeader, $jwtClaims, (string) $serviceAccount['private_key']);
-
-        $http = new GuzzleClient();
-        $resp = $http->post($aud, [
-            'form_params' => [
-                'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                'assertion'  => $jwt,
-            ],
-            // phpcs:ignore SlevomatCodingStandard.Functions.TrailingCommaInCall
-        ]);
-
-        /** @var array<string, mixed> $json */
-        $json = json_decode((string) $resp->getBody(), true) ?: [];
-        if (empty($json['access_token'])) {
-            throw new UserException('Service Account token exchange failed: missing access_token in response.');
-        }
-
-        return (string) $json['access_token'];
-    }
-
-    /** @param array<string, mixed> $sa */
-    private function assertSa(array $sa): void
-    {
-        foreach (['client_email', 'private_key'] as $k) {
-            if (empty($sa[$k]) || !is_string($sa[$k])) {
-                throw new UserException(sprintf('Invalid Service Account JSON: missing "%s".', $k));
-            }
-        }
-    }
-
-    /** @param array<string, mixed> $header @param array<string, mixed> $claims */
-    private function encodeJwt(array $header, array $claims, string $privateKey): string
-    {
-        $h = $this->b64(json_encode($header) ?: '');
-        $c = $this->b64(json_encode($claims) ?: '');
-        $signingInput = $h . '.' . $c;
-
+        $signingInput = $jwtHeader . '.' . $jwtPayload;
         $signature = '';
         $ok = openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         if (!$ok) {
-            throw new UserException('Failed to sign JWT with provided private_key.');
+            throw new UserException('Failed to sign JWT with the provided private key.');
+        }
+        $jwt = $signingInput . '.' . $this->b64($signature);
+
+        // Exchange JWT for access token
+        $postFields = http_build_query([
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion'  => $jwt,
+        ]);
+
+        $ch = curl_init($tokenUri);
+        if ($ch === false) {
+            throw new UserException('Failed to initialize cURL.');
         }
 
-        return $signingInput . '.' . $this->b64($signature);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $postFields,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_TIMEOUT        => 20,
+        ]);
+
+        /** @var string|false $resp */
+        $resp = curl_exec($ch);
+        if ($resp === false) {
+            $err = curl_error($ch);
+            curl_close($ch);
+            throw new UserException('Failed to obtain access token: ' . $err);
+        }
+
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        /** @var array<string,mixed>|null $json */
+        $json = json_decode($resp, true);
+        if ($status < 200 || $status >= 300 || !is_array($json)) {
+            throw new UserException('Failed to obtain access token: HTTP ' . $status . ' ' . $resp);
+        }
+
+        $accessToken = $json['access_token'] ?? null;
+        if (!is_string($accessToken) || $accessToken === '') {
+            throw new UserException('Access token not found in response.');
+        }
+
+        return $accessToken;
     }
 
     private function b64(string $raw): string
     {
-        $enc = rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
-        return $enc;
+        return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+    }
+
+    /** @param mixed $v */
+    private function expectString($v, string $field): string
+    {
+        if (!is_string($v) || $v === '') {
+            throw new UserException(sprintf('Invalid or missing "%s" in service account JSON.', $field));
+        }
+        return $v;
     }
 }
