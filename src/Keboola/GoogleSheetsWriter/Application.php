@@ -24,75 +24,69 @@ class Application
 {
     private Container $container;
 
-    /** @param array<string,mixed> $config */
     public function __construct(array $config, Logger $logger)
     {
         $container = new Container();
-        $container['action'] = $config['action'] ?? 'run';
-        $container['logger'] = function () use ($logger) {
+
+        $container['action'] = isset($config['action']) ? (string) $config['action'] : 'run';
+        $container['logger'] = static function () use ($logger) {
             return $logger;
         };
 
-        $container['parameters'] = $this->validateParameters($config['parameters']);
+        // Validate parameters
+        $container['parameters'] = $this->validateParameters($config['parameters'] ?? []);
 
-        if (!isset($config['authorization'])) {
+        // ---- AUTH SELECTION (OAuth first, fallback to Service Account if provided) ----
+        $auth = $config['authorization'] ?? [];
+        $oauthCreds = $auth['oauth_api']['credentials'] ?? null;
+        $saJson = $auth['#serviceAccountJson'] ?? null;
+
+        if (!$oauthCreds && !$saJson) {
             throw new UserException('Missing authorization data');
         }
 
-        /** @var array<string,mixed> $auth */
-        $auth = $config['authorization'];
-
-        $container['google_client'] = function ($container) use ($auth) {
-            // Prefer service account if present
-            if (isset($auth['#serviceAccountJson']) && is_array($auth['#serviceAccountJson'])) {
-                /** @var array<string,mixed> $sa */
-                $sa = $auth['#serviceAccountJson'];
-                $tokenFactory = new ServiceAccountTokenFactory($sa);
-                $accessToken = $tokenFactory->createAccessToken();
-                return new RestApiBearer($accessToken, $container['logger']);
-            }
-
-            // Fallback to OAuth credentials
-            if (!isset($auth['oauth_api']['credentials'])) {
-                throw new UserException('Missing authorization data');
-            }
-            /** @var array<string,mixed> $credentials */
-            $credentials = $auth['oauth_api']['credentials'];
-            if (!isset($credentials['#data'], $credentials['appKey'], $credentials['#appSecret'])) {
-                throw new UserException('Missing authorization data');
-            }
-
-            /** @var array{access_token?:string,refresh_token?:string} $tokenData */
-            $tokenData = (array) json_decode((string) $credentials['#data'], true);
-            $accessToken = (string) ($tokenData['access_token'] ?? '');
-            $refreshToken = (string) ($tokenData['refresh_token'] ?? '');
-
+        // Build a RestApi-like client according to available creds
+        $container['google_client'] = function () use ($container, $oauthCreds, $saJson) {
             $retries = ($container['action'] !== 'run') ? 2 : 7;
 
-            $api = new RestApi(
-                (string) $credentials['appKey'],
-                (string) $credentials['#appSecret'],
-                $accessToken,
-                $refreshToken,
-                $container['logger']
-            );
+            if ($oauthCreds) {
+                $appKey     = (string) ($oauthCreds['appKey']     ?? '');
+                $appSecret  = (string) ($oauthCreds['#appSecret'] ?? '');
+                $tokenData  = json_decode((string) ($oauthCreds['#data'] ?? ''), true) ?: [];
+
+                $access = (string) ($tokenData['access_token']  ?? '');
+                $refresh = (string) ($tokenData['refresh_token'] ?? '');
+
+                if ($appKey === '' || $appSecret === '' || $access === '' || $refresh === '') {
+                    throw new UserException('Missing authorization data');
+                }
+
+                $api = new RestApi($appKey, $appSecret, $access, $refresh, $container['logger']);
+                $api->setBackoffsCount($retries);
+                return $api;
+            }
+
+            // Service Account path
+            /** @var array<string, mixed> $saJson */
+            $tokenFactory = new ServiceAccountTokenFactory();
+            $accessToken = $tokenFactory->fromServiceAccountJson($saJson);
+
+            $api = new RestApiBearer($accessToken);
             $api->setBackoffsCount($retries);
             return $api;
         };
 
-        $container['google_sheets_client'] = function ($container) {
-            $client = new Client($container['google_client']);
+        $container['google_sheets_client'] = static function ($container) {
+            $client = new Client($container['google_client']); // type-happy now
             $client->setTeamDriveSupport(true);
             return $client;
         };
 
-        $container['input'] = function ($container) {
-            /** @var array{data_dir:string} $params */
-            $params = $container['parameters'];
-            return new TableFactory($params['data_dir']);
+        $container['input'] = static function ($container) {
+            return new TableFactory((string) $container['parameters']['data_dir']);
         };
 
-        $container['writer'] = function ($container) {
+        $container['writer'] = static function ($container) {
             return new Writer(
                 $container['google_sheets_client'],
                 $container['input'],
@@ -103,119 +97,125 @@ class Application
         $this->container = $container;
     }
 
-    /** @return array<string,mixed> */
     public function run(): array
     {
         $actionMethod = $this->container['action'] . 'Action';
         if (!method_exists($this, $actionMethod)) {
-            throw new UserException(sprintf("Action '%s' does not exist.", (string) $this->container['action']));
+            // Keep legacy wording the tests assert
+            throw new UserException(sprintf("Action '%s' does not exist.", $this['action']));
         }
 
         try {
-            /** @var array<string,mixed> $res */
-            $res = $this->$actionMethod();
-            return $res;
+            /** @var array<string, mixed> */
+            return $this->$actionMethod();
         } catch (RequestException $e) {
             $code = (int) $e->getCode();
+
             if ($code === 401) {
                 throw new UserException('Expired or wrong credentials, please reauthorize.', $code, $e);
             }
+
             if ($code === 403) {
-                $reason = $e->getResponse() ? $e->getResponse()->getReasonPhrase() : '';
-                if (strtolower((string) $reason) === 'forbidden') {
+                $resp = $e->getResponse();
+                if ($resp && strtolower($resp->getReasonPhrase()) === 'forbidden') {
                     $this->container['logger']->warning("You don't have access to Google Drive resource.");
-                    return [];
+                    return []; // keep behavior used in tests
                 }
+                $reason = $resp ? $resp->getReasonPhrase() : 'Forbidden';
                 throw new UserException('Reason: ' . $reason, $code, $e);
             }
+
             if ($code === 404) {
                 throw new UserException('File or folder not found. ' . $e->getMessage(), $code, $e);
             }
+
             if ($code === 400) {
-                throw new UserException($e->getMessage(), $code);
+                throw new UserException($e->getMessage(), $code, $e);
             }
+
             if ($code >= 500 && $code < 600) {
                 throw new UserException('Google API error: ' . $e->getMessage(), $code, $e);
             }
 
-            $response = $e->getResponse() !== null ? ['response' => $e->getResponse()->getBody()->getContents()] : [];
-            throw new ApplicationException($e->getMessage(), 500, $e, $response);
+            $resp = $e->getResponse();
+            $data = $resp ? ['response' => $resp->getBody()->getContents()] : [];
+            throw new ApplicationException($e->getMessage(), 500, $e, $data);
         }
     }
 
-    /** @return array<string,mixed> */
+    // ---- Actions used by the tests ----
+
     protected function runAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        /** @var array{tables: array<int, array<string,mixed>>} $params */
-        $params = $this->container['parameters'];
-        $writer->process($params['tables']);
+        $writer->process($this->container['parameters']['tables']);
 
         return ['status' => 'ok'];
     }
 
-    /** @return array<string,mixed> */
     protected function getSpreadsheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        /** @var array{tables: array<int, array{fileId:string}>} $params */
-        $params = $this->container['parameters'];
-        $res = $writer->getSpreadsheet((string) $params['tables'][0]['fileId']);
+        $res = $writer->getSpreadsheet((string) $this->container['parameters']['tables'][0]['fileId']);
 
-        return ['status' => 'ok', 'spreadsheet' => $res];
+        return [
+            'status' => 'ok',
+            'spreadsheet' => $res,
+        ];
     }
 
-    /** @return array<string,mixed> */
     protected function createSpreadsheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        /** @var array{tables: array<int, array<string,mixed>>} $params */
-        $params = $this->container['parameters'];
-        $res = $writer->createSpreadsheet($params['tables'][0]);
+        /** @var array<string, mixed> $file */
+        $file = $this->container['parameters']['tables'][0];
+        $res = $writer->createSpreadsheet($file);
 
-        return ['status' => 'ok', 'spreadsheet' => $res];
+        return [
+            'status' => 'ok',
+            'spreadsheet' => $res,
+        ];
     }
 
-    /** @return array<string,mixed> */
     protected function addSheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        /** @var array{tables: array<int, array<string,mixed>>} $params */
-        $params = $this->container['parameters'];
-        $res = $writer->addSheet($params['tables'][0]);
+        /** @var array<string, mixed> $sheet */
+        $sheet = $this->container['parameters']['tables'][0];
+        $res = $writer->addSheet($sheet);
 
-        return ['status' => 'ok', 'sheet' => $res];
+        return [
+            'status' => 'ok',
+            'sheet' => $res,
+        ];
     }
 
-    /** @return array<string,mixed> */
     protected function deleteSheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        /** @var array{tables: array<int, array<string,mixed>>} $params */
-        $params = $this->container['parameters'];
-        $writer->deleteSheet($params['tables'][0]);
+        /** @var array<string, mixed> $sheet */
+        $sheet = $this->container['parameters']['tables'][0];
+        $writer->deleteSheet($sheet);
 
         return ['status' => 'ok'];
     }
 
-    /** @param array<string,mixed> $parameters
-     *  @return array<string,mixed>
-     */
+    /** @return array<string, mixed> */
     private function validateParameters(array $parameters): array
     {
         try {
             $processor = new Processor();
-            /** @var array<string,mixed> $out */
-            $out = $processor->processConfiguration(
+
+            /** @var array<string, mixed> */
+            return $processor->processConfiguration(
                 new ConfigDefinition(),
                 [$parameters]
             );
-            return $out;
         } catch (InvalidConfigurationException $e) {
             throw new UserException($e->getMessage(), 400, $e);
         }

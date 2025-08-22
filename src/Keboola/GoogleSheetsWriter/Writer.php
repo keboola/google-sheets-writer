@@ -48,28 +48,21 @@ class Writer
     public function process(array $sheets): void
     {
         foreach ($sheets as $sheetCfg) {
-            if (!($sheetCfg['enabled'] ?? true)) {
-                continue;
+            if ($sheetCfg['enabled']) {
+                $fileLabel = $sheetCfg['title'] ?? ($sheetCfg['fileId'] ?? '(unknown)');
+                $this->logger->info(sprintf(
+                    'Processing sheet "%s" in file "%s"',
+                    $sheetCfg['sheetTitle'],
+                    (string) $fileLabel
+                ));
+
+                $sheetWriter = new Sheet(
+                    $this->driveApi,
+                    $this->input->getTable($sheetCfg['tableId']),
+                    $this->logger
+                );
+                $sheetWriter->process($sheetCfg);
             }
-
-            $fileLabel = $sheetCfg['title']
-                ?? $sheetCfg['fileTitle']
-                ?? ($sheetCfg['fileId'] ?? '(unknown)');
-            $sheetLabel = $sheetCfg['sheetTitle']
-                ?? ('#' . (string) ($sheetCfg['sheetId'] ?? '?'));
-
-            $this->logger->info(sprintf(
-                'Processing sheet "%s" in file "%s"',
-                $sheetLabel,
-                $fileLabel,
-            ));
-
-            $sheetWriter = new Sheet(
-                $this->driveApi,
-                $this->input->getTable($sheetCfg['tableId']),
-                $this->logger,
-            );
-            $sheetWriter->process($sheetCfg);
         }
     }
 

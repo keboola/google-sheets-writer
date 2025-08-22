@@ -6,29 +6,39 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter\Http;
 
+use GuzzleHttp\Psr7\Response;
 use Keboola\Google\ClientBundle\Google\RestApi;
-use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Lightweight wrapper to call Google APIs with a pre-built OAuth2 Bearer access token
+ * (e.g., from a Service Account), while keeping the original RestApi interface/type.
+ */
 class RestApiBearer extends RestApi
 {
-    private string $accessToken;
-
-    public function __construct(string $accessToken, ?\Psr\Log\LoggerInterface $logger = null)
+    /**
+     * @param string $accessToken Preissued OAuth2 access token (e.g. from a Service Account JWT flow).
+     */
+    public function __construct(string $accessToken)
     {
-        // Parent expects clientId/secret/tokens; we bypass those and only reuse its request machinery.
-        parent::__construct('', '', '', '', $logger);
-        $this->accessToken = $accessToken;
+        // Parent wants: clientId, clientSecret, accessToken, refreshToken, Logger|null
+        // For bearer-only we pass nulls/empty where appropriate and NEVER refresh.
+        parent::__construct(null, null, $accessToken, '', null);
     }
 
     /**
-     * @param string $method
-     * @param string $url
-     * @param array<string,string> $headers
-     * @param array<string,mixed> $options
+     * Match parent signature/return type exactly to keep tools happy.
+     * Parent type is GuzzleHttp\Psr7\Response (not the interface), so we keep that.
      */
-    public function request(string $method, string $url, array $headers = [], array $options = []): ResponseInterface
+    public function request(string $method, string $url, array $options = []): Response
     {
-        $headers['Authorization'] = 'Bearer ' . $this->accessToken;
-        return parent::request($method, $url, $headers, $options);
+        // Ensure Authorization header is present. Do not clobber if already set.
+        if (!isset($options['headers'])) {
+            $options['headers'] = [];
+        }
+        if (!isset($options['headers']['Authorization'])) {
+            $options['headers']['Authorization'] = 'Bearer ' . $this->accessToken;
+        }
+
+        return parent::request($method, $url, $options);
     }
 }
