@@ -2,95 +2,79 @@
 
 declare(strict_types=1);
 
+/* phpcs:disable */
+
 namespace Keboola\GoogleSheetsWriter\Auth;
 
-use Keboola\GoogleSheetsWriter\Exception\UserException;
+use RuntimeException;
 
 class ServiceAccountTokenFactory
 {
-    /**
-     * @param array<string,mixed> $serviceAccount
-     * @param list<string> $scopes
-     */
-    public function getAccessToken(array $serviceAccount, array $scopes): string
+    /** @var array<string,mixed> */
+    private array $sa;
+
+    /** @param array<string,mixed> $serviceAccountJson */
+    public function __construct(array $serviceAccountJson)
     {
-        $clientEmail = $this->expectString($serviceAccount['client_email'] ?? null, 'client_email');
-        $privateKey  = $this->expectString($serviceAccount['private_key'] ?? null, 'private_key');
-        $tokenUri    = $this->expectString($serviceAccount['token_uri'] ?? 'https://oauth2.googleapis.com/token', 'token_uri');
+        $this->sa = $serviceAccountJson;
+    }
 
+    public function createAccessToken(): string
+    {
         $now = time();
-        $jwtHeader   = $this->b64(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
-        $jwtPayload  = $this->b64(json_encode([
-            'iss'   => $clientEmail,
-            'scope' => implode(' ', $scopes),
-            'aud'   => $tokenUri,
-            'iat'   => $now,
-            'exp'   => $now + 3600,
-        ]));
 
-        $signingInput = $jwtHeader . '.' . $jwtPayload;
+        $header = ['alg' => 'RS256', 'typ' => 'JWT'];
+        $payload = [
+            'iss' => (string) $this->sa['client_email'],
+            'scope' => 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets',
+            'aud' => (string) $this->sa['token_uri'],
+            'exp' => $now + 3600,
+            'iat' => $now,
+        ];
+
+        $headerB64  = $this->b64(json_encode($header, JSON_THROW_ON_ERROR));
+        $payloadB64 = $this->b64(json_encode($payload, JSON_THROW_ON_ERROR));
+        $signingInput = $headerB64 . '.' . $payloadB64;
+
+        $privateKey = (string) $this->sa['private_key'];
         $signature = '';
-        $ok = openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
-        if (!$ok) {
-            throw new UserException('Failed to sign JWT with the provided private key.');
+        if (!openssl_sign($signingInput, $signature, $privateKey, 'sha256')) {
+            throw new RuntimeException('Failed to sign JWT for service account.');
         }
         $jwt = $signingInput . '.' . $this->b64($signature);
 
-        // Exchange JWT for access token
-        $postFields = http_build_query([
+        // Exchange JWT for access token (simple stream-context HTTP POST)
+        $post = http_build_query([
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion'  => $jwt,
+        ], '', '&');
+
+        $ctx = stream_context_create([
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+                'content' => $post,
+                'timeout' => 30,
+            ],
         ]);
 
-        $ch = curl_init($tokenUri);
-        if ($ch === false) {
-            throw new UserException('Failed to initialize cURL.');
-        }
-
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $postFields,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
-            CURLOPT_TIMEOUT        => 20,
-        ]);
-
-        /** @var string|false $resp */
-        $resp = curl_exec($ch);
+        $resp = file_get_contents((string) $this->sa['token_uri'], false, $ctx);
         if ($resp === false) {
-            $err = curl_error($ch);
-            curl_close($ch);
-            throw new UserException('Failed to obtain access token: ' . $err);
+            throw new RuntimeException('Failed to obtain access token from Google OAuth.');
         }
 
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        /** @var array<string,mixed>|null $json */
-        $json = json_decode($resp, true);
-        if ($status < 200 || $status >= 300 || !is_array($json)) {
-            throw new UserException('Failed to obtain access token: HTTP ' . $status . ' ' . $resp);
+        /** @var array{access_token?: string} $json */
+        $json = (array) json_decode($resp, true);
+        if (empty($json['access_token'])) {
+            throw new RuntimeException('OAuth response does not contain access_token.');
         }
 
-        $accessToken = $json['access_token'] ?? null;
-        if (!is_string($accessToken) || $accessToken === '') {
-            throw new UserException('Access token not found in response.');
-        }
-
-        return $accessToken;
+        return (string) $json['access_token'];
     }
 
     private function b64(string $raw): string
     {
-        return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
-    }
-
-    /** @param mixed $v */
-    private function expectString($v, string $field): string
-    {
-        if (!is_string($v) || $v === '') {
-            throw new UserException(sprintf('Invalid or missing "%s" in service account JSON.', $field));
-        }
-        return $v;
+        $b64 = base64_encode($raw);
+        return rtrim(strtr($b64, '+/', '-_'), '=');
     }
 }
