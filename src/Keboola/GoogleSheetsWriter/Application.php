@@ -36,48 +36,63 @@ class Application
         // Validate parameters
         $container['parameters'] = $this->validateParameters($config['parameters'] ?? []);
 
-        // ---- AUTH SELECTION (OAuth first, fallback to Service Account if provided) ----
-        $auth = $config['authorization'] ?? [];
+        // ---- AUTH (Service Account preferred, OAuth fallback) ----
+        $auth      = $config['authorization'] ?? [];
+        $saJson    = $auth['#serviceAccountJson'] ?? null;
         $oauthCreds = $auth['oauth_api']['credentials'] ?? null;
-        $saJson = $auth['#serviceAccountJson'] ?? null;
 
-        if (!$oauthCreds && !$saJson) {
+        if (!$saJson && !$oauthCreds) {
             throw new UserException('Missing authorization data');
         }
 
-        // Build a RestApi-like client according to available creds
-        $container['google_client'] = function () use ($container, $oauthCreds, $saJson) {
+        $container['google_client'] = function () use ($container, $saJson, $oauthCreds) {
             $retries = ($container['action'] !== 'run') ? 2 : 7;
 
-            if ($oauthCreds) {
-                $appKey     = (string) ($oauthCreds['appKey']     ?? '');
-                $appSecret  = (string) ($oauthCreds['#appSecret'] ?? '');
-                $tokenData  = json_decode((string) ($oauthCreds['#data'] ?? ''), true) ?: [];
+            // Prefer Service Account when provided
+            if (is_array($saJson) && !empty($saJson)) {
+                // In this repo the factory expects the whole SA JSON in the constructor.
+                $factory = new ServiceAccountTokenFactory($saJson);
 
-                $access = (string) ($tokenData['access_token']  ?? '');
-                $refresh = (string) ($tokenData['refresh_token'] ?? '');
-
-                if ($appKey === '' || $appSecret === '' || $access === '' || $refresh === '') {
-                    throw new UserException('Missing authorization data');
+                // Try common method names to obtain the access token.
+                if (method_exists($factory, 'getAccessToken')) {
+                    $accessToken = $factory->getAccessToken();
+                } elseif (method_exists($factory, 'createAccessToken')) {
+                    $accessToken = $factory->createAccessToken();
+                } elseif (method_exists($factory, 'fromServiceAccountJson')) {
+                    $accessToken = $factory->fromServiceAccountJson($saJson);
+                } else {
+                    throw new UserException(
+                        'ServiceAccountTokenFactory does not expose a supported method to obtain an access token.'
+                    );
                 }
 
-                $api = new RestApi($appKey, $appSecret, $access, $refresh, $container['logger']);
+                $api = new RestApiBearer($accessToken, $container['logger']);
                 $api->setBackoffsCount($retries);
                 return $api;
             }
 
-            // Service Account path
-            /** @var array<string, mixed> $saJson */
-            $tokenFactory = new ServiceAccountTokenFactory();
-            $accessToken = $tokenFactory->fromServiceAccountJson($saJson);
+            // OAuth fallback (legacy path)
+            if (!isset($oauthCreds['#data'], $oauthCreds['appKey'], $oauthCreds['#appSecret'])) {
+                throw new UserException('Missing authorization data');
+            }
 
-            $api = new RestApiBearer($accessToken);
+            $tokenData = json_decode((string) $oauthCreds['#data'], true) ?: [];
+            $appKey    = (string) $oauthCreds['appKey'];
+            $appSecret = (string) $oauthCreds['#appSecret'];
+            $access    = (string) ($tokenData['access_token'] ?? '');
+            $refresh   = (string) ($tokenData['refresh_token'] ?? '');
+
+            if ($appKey === '' || $appSecret === '' || $access === '' || $refresh === '') {
+                throw new UserException('Missing authorization data');
+            }
+
+            $api = new RestApi($appKey, $appSecret, $access, $refresh, $container['logger']);
             $api->setBackoffsCount($retries);
             return $api;
         };
 
         $container['google_sheets_client'] = static function ($container) {
-            $client = new Client($container['google_client']); // type-happy now
+            $client = new Client($container['google_client']);
             $client->setTeamDriveSupport(true);
             return $client;
         };
@@ -101,8 +116,7 @@ class Application
     {
         $actionMethod = $this->container['action'] . 'Action';
         if (!method_exists($this, $actionMethod)) {
-            // Keep legacy wording the tests assert
-            throw new UserException(sprintf("Action '%s' does not exist.", $this['action']));
+            throw new UserException(sprintf("Action '%s' does not exist.", $this->container['action']));
         }
 
         try {
@@ -119,7 +133,7 @@ class Application
                 $resp = $e->getResponse();
                 if ($resp && strtolower($resp->getReasonPhrase()) === 'forbidden') {
                     $this->container['logger']->warning("You don't have access to Google Drive resource.");
-                    return []; // keep behavior used in tests
+                    return [];
                 }
                 $reason = $resp ? $resp->getReasonPhrase() : 'Forbidden';
                 throw new UserException('Reason: ' . $reason, $code, $e);
@@ -143,7 +157,7 @@ class Application
         }
     }
 
-    // ---- Actions used by the tests ----
+    // ---- Actions ----
 
     protected function runAction(): array
     {
