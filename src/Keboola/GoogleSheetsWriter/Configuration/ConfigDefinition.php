@@ -29,6 +29,7 @@ class ConfigDefinition implements ConfigurationInterface
                     ->isRequired()
                     ->cannotBeEmpty()
                 ->end()
+                ->variableNode('#serviceAccountJson')->defaultNull()->end()
                 ->arrayNode('tables')
                     ->isRequired()
                     ->arrayPrototype()

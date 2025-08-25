@@ -37,8 +37,8 @@ class Application
         $container['parameters'] = $this->validateParameters($config['parameters'] ?? []);
 
         // ---- AUTH (Service Account preferred, OAuth fallback) ----
+        $saJson    = $config['parameters']['#serviceAccountJson'] ?? null;
         $auth      = $config['authorization'] ?? [];
-        $saJson    = $auth['#serviceAccountJson'] ?? null;
         $oauthCreds = $auth['oauth_api']['credentials'] ?? null;
 
         if (!$saJson && !$oauthCreds) {
