@@ -49,10 +49,11 @@ class Writer
     {
         foreach ($sheets as $sheetCfg) {
             if ($sheetCfg['enabled']) {
+                $fileLabel = $sheetCfg['title'] ?? ($sheetCfg['fileId'] ?? '(unknown)');
                 $this->logger->info(sprintf(
                     'Processing sheet "%s" in file "%s"',
                     $sheetCfg['sheetTitle'],
-                    $sheetCfg['title']
+                    (string) $fileLabel
                 ));
 
                 $sheetWriter = new Sheet(
@@ -109,7 +110,7 @@ class Writer
                 'properties' => [
                     'title' => $sheet['sheetTitle'],
                 ],
-            ]
+            ],
         );
         $this->logger->debug('add sheet', [
             'response' => $addSheetResponse,
@@ -122,7 +123,7 @@ class Writer
     {
         return $this->driveApi->deleteSheet(
             (string) $sheet['fileId'],
-            (string) $sheet['sheetId']
+            (string) $sheet['sheetId'],
         );
     }
 }

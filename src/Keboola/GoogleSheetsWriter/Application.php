@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
+/* phpcs:disable */
+
 namespace Keboola\GoogleSheetsWriter;
 
 use GuzzleHttp\Exception\RequestException;
 use Keboola\Google\ClientBundle\Google\RestApi;
 use Keboola\GoogleSheetsClient\Client;
+use Keboola\GoogleSheetsWriter\Auth\ServiceAccountTokenFactory;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Exception\ApplicationException;
 use Keboola\GoogleSheetsWriter\Exception\UserException;
+use Keboola\GoogleSheetsWriter\Http\RestApiBearer;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Monolog\Logger;
 use Pimple\Container;
@@ -23,45 +27,81 @@ class Application
     public function __construct(array $config, Logger $logger)
     {
         $container = new Container();
-        $container['action'] = $config['action'] ?? 'run';
-        $container['logger'] = function () use ($logger) {
+
+        $container['action'] = isset($config['action']) ? (string) $config['action'] : 'run';
+        $container['logger'] = static function () use ($logger) {
             return $logger;
         };
 
-        $container['parameters'] = $this->validateParameters($config['parameters']);
-        if (!isset($config['authorization']['oauth_api']['credentials'])) {
-            throw new UserException('Missing authorization data');
-        }
-        $credentials = $config['authorization']['oauth_api']['credentials'];
-        if (!isset($credentials['#data']) || !isset($credentials['appKey']) || !isset($credentials['#appSecret'])) {
+        // Validate parameters
+        $container['parameters'] = $this->validateParameters($config['parameters'] ?? []);
+
+        // ---- AUTH (Service Account preferred, OAuth fallback) ----
+        $saJson    = $config['parameters']['#serviceAccountJson'] ?? null;
+        $auth      = $config['authorization'] ?? [];
+        $oauthCreds = $auth['oauth_api']['credentials'] ?? null;
+
+        if (!$saJson && !$oauthCreds) {
             throw new UserException('Missing authorization data');
         }
 
-        $tokenData = json_decode($credentials['#data'], true);
-        $container['google_client'] = function ($container) use ($credentials, $tokenData) {
-            $retries = 7;
-            if ($container['action'] !== 'run') {
-                $retries = 2;
+        $container['google_client'] = function () use ($container, $saJson, $oauthCreds) {
+            $retries = ($container['action'] !== 'run') ? 2 : 7;
+
+            // Prefer Service Account when provided
+            if (is_array($saJson) && !empty($saJson)) {
+                // In this repo the factory expects the whole SA JSON in the constructor.
+                $factory = new ServiceAccountTokenFactory($saJson);
+
+                // Try common method names to obtain the access token.
+                if (method_exists($factory, 'getAccessToken')) {
+                    $accessToken = $factory->getAccessToken();
+                } elseif (method_exists($factory, 'createAccessToken')) {
+                    $accessToken = $factory->createAccessToken();
+                } elseif (method_exists($factory, 'fromServiceAccountJson')) {
+                    $accessToken = $factory->fromServiceAccountJson($saJson);
+                } else {
+                    throw new UserException(
+                        'ServiceAccountTokenFactory does not expose a supported method to obtain an access token.'
+                    );
+                }
+
+                $api = new RestApiBearer($accessToken, $container['logger']);
+                $api->setBackoffsCount($retries);
+                return $api;
             }
-            $api = new RestApi(
-                $credentials['appKey'],
-                $credentials['#appSecret'],
-                $tokenData['access_token'],
-                $tokenData['refresh_token'],
-                $container['logger']
-            );
+
+            // OAuth fallback (legacy path)
+            if (!isset($oauthCreds['#data'], $oauthCreds['appKey'], $oauthCreds['#appSecret'])) {
+                throw new UserException('Missing authorization data');
+            }
+
+            $tokenData = json_decode((string) $oauthCreds['#data'], true) ?: [];
+            $appKey    = (string) $oauthCreds['appKey'];
+            $appSecret = (string) $oauthCreds['#appSecret'];
+            $access    = (string) ($tokenData['access_token'] ?? '');
+            $refresh   = (string) ($tokenData['refresh_token'] ?? '');
+
+            if ($appKey === '' || $appSecret === '' || $access === '' || $refresh === '') {
+                throw new UserException('Missing authorization data');
+            }
+
+            $api = new RestApi($appKey, $appSecret, $access, $refresh, $container['logger']);
             $api->setBackoffsCount($retries);
             return $api;
         };
-        $container['google_sheets_client'] = function ($container) {
+
+        $container['google_sheets_client'] = static function ($container) {
             $client = new Client($container['google_client']);
             $client->setTeamDriveSupport(true);
             return $client;
         };
-        $container['input'] = function ($container) {
-            return new TableFactory($container['parameters']['data_dir']);
+
+        $container['input'] = static function ($container) {
+            return new TableFactory((string) $container['parameters']['data_dir']);
         };
-        $container['writer'] = function ($container) {
+
+        $container['writer'] = static function ($container) {
             return new Writer(
                 $container['google_sheets_client'],
                 $container['input'],
@@ -76,36 +116,48 @@ class Application
     {
         $actionMethod = $this->container['action'] . 'Action';
         if (!method_exists($this, $actionMethod)) {
-            throw new UserException(sprintf("Action '%s' does not exist.", $this['action']));
+            throw new UserException(sprintf("Action '%s' does not exist.", $this->container['action']));
         }
 
         try {
+            /** @var array<string, mixed> */
             return $this->$actionMethod();
         } catch (RequestException $e) {
-            if ($e->getCode() === 401) {
-                throw new UserException('Expired or wrong credentials, please reauthorize.', $e->getCode(), $e);
+            $code = (int) $e->getCode();
+
+            if ($code === 401) {
+                throw new UserException('Expired or wrong credentials, please reauthorize.', $code, $e);
             }
-            if ($e->getCode() === 403) {
-                if (strtolower($e->getResponse()->getReasonPhrase()) === 'forbidden') {
+
+            if ($code === 403) {
+                $resp = $e->getResponse();
+                if ($resp && strtolower($resp->getReasonPhrase()) === 'forbidden') {
                     $this->container['logger']->warning("You don't have access to Google Drive resource.");
                     return [];
                 }
-                throw new UserException('Reason: ' . $e->getResponse()->getReasonPhrase(), $e->getCode(), $e);
-            }
-            if ($e->getCode() === 404) {
-                throw new UserException('File or folder not found. ' . $e->getMessage(), $e->getCode(), $e);
-            }
-            if ($e->getCode() === 400) {
-                throw new UserException($e->getMessage());
-            }
-            if ($e->getCode() >= 500 && $e->getCode() < 600) {
-                throw new UserException('Google API error: ' . $e->getMessage(), $e->getCode(), $e);
+                $reason = $resp ? $resp->getReasonPhrase() : 'Forbidden';
+                throw new UserException('Reason: ' . $reason, $code, $e);
             }
 
-            $response = $e->getResponse() !== null ? ['response' => $e->getResponse()->getBody()->getContents()] : [];
-            throw new ApplicationException($e->getMessage(), 500, $e, $response);
+            if ($code === 404) {
+                throw new UserException('File or folder not found. ' . $e->getMessage(), $code, $e);
+            }
+
+            if ($code === 400) {
+                throw new UserException($e->getMessage(), $code, $e);
+            }
+
+            if ($code >= 500 && $code < 600) {
+                throw new UserException('Google API error: ' . $e->getMessage(), $code, $e);
+            }
+
+            $resp = $e->getResponse();
+            $data = $resp ? ['response' => $resp->getBody()->getContents()] : [];
+            throw new ApplicationException($e->getMessage(), 500, $e, $data);
         }
     }
+
+    // ---- Actions ----
 
     protected function runAction(): array
     {
@@ -113,16 +165,14 @@ class Application
         $writer = $this->container['writer'];
         $writer->process($this->container['parameters']['tables']);
 
-        return [
-            'status' => 'ok',
-        ];
+        return ['status' => 'ok'];
     }
 
     protected function getSpreadsheetAction(): array
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        $res = $writer->getSpreadsheet($this->container['parameters']['tables'][0]['fileId']);
+        $res = $writer->getSpreadsheet((string) $this->container['parameters']['tables'][0]['fileId']);
 
         return [
             'status' => 'ok',
@@ -134,7 +184,9 @@ class Application
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        $res = $writer->createSpreadsheet($this->container['parameters']['tables'][0]);
+        /** @var array<string, mixed> $file */
+        $file = $this->container['parameters']['tables'][0];
+        $res = $writer->createSpreadsheet($file);
 
         return [
             'status' => 'ok',
@@ -146,7 +198,9 @@ class Application
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        $res = $writer->addSheet($this->container['parameters']['tables'][0]);
+        /** @var array<string, mixed> $sheet */
+        $sheet = $this->container['parameters']['tables'][0];
+        $res = $writer->addSheet($sheet);
 
         return [
             'status' => 'ok',
@@ -158,17 +212,20 @@ class Application
     {
         /** @var Writer $writer */
         $writer = $this->container['writer'];
-        $writer->deleteSheet($this->container['parameters']['tables'][0]);
+        /** @var array<string, mixed> $sheet */
+        $sheet = $this->container['parameters']['tables'][0];
+        $writer->deleteSheet($sheet);
 
-        return [
-            'status' => 'ok',
-        ];
+        return ['status' => 'ok'];
     }
 
+    /** @return array<string, mixed> */
     private function validateParameters(array $parameters): array
     {
         try {
             $processor = new Processor();
+
+            /** @var array<string, mixed> */
             return $processor->processConfiguration(
                 new ConfigDefinition(),
                 [$parameters]

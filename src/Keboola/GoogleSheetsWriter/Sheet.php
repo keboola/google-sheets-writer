@@ -71,12 +71,13 @@ class Sheet
     private function preFlightChecks(array $sheet, array $sheetProperties, int $columnCountSrc, int $rowCountSrc): void
     {
         if (empty($sheetProperties)) {
+            $fileLabel = $sheet['title'] ?? $sheet['fileTitle'] ?? ($sheet['fileId'] ?? '(unknown)');
             throw new UserException(sprintf(
                 'Sheet "%s" (%s) not found in file "%s" (%s)',
                 $sheet['sheetTitle'],
                 $sheet['sheetId'],
-                $sheet['title'],
-                $sheet['fileId']
+                $fileLabel,
+                $sheet['fileId'],
             ));
         }
 
@@ -84,6 +85,7 @@ class Sheet
             throw new UserException('CSV file exceeds the limit of 10000000 cells');
         }
     }
+
 
     private function updateAction(array $sheet, Table $inputTable): array
     {
@@ -244,20 +246,20 @@ class Sheet
     {
         $isAppend = $sheet['action'] === ConfigDefinition::ACTION_APPEND;
         $commonCondition = $rowCountSrc === $rowCountUpdated;
-        // header is omitted when appending to non-empty file
         $appendCondition = $isAppend && (($rowCountSrc - 1 === $rowCountUpdated) || $rowCountSrc === $rowCountUpdated);
 
         if (!$commonCondition && !$appendCondition) {
+            $fileLabel = $sheet['title'] ?? $sheet['fileTitle'] ?? ($sheet['fileId'] ?? '(unknown)');
             throw new UserException(sprintf(
                 'Number of written rows (%d) in the sheet does not match with source table (%d). '
                 . 'File "%s" (%s), sheet "%s" (%s). '
                 . 'Try disabling all filters in the sheet and run the writer again.',
                 $rowCountUpdated,
                 $rowCountSrc,
-                $sheet['title'],
+                $fileLabel,
                 $sheet['fileId'],
                 $sheet['sheetTitle'],
-                $sheet['sheetId']
+                $sheet['sheetId'],
             ));
         }
     }
