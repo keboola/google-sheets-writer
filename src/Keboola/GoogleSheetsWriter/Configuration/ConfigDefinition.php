@@ -33,9 +33,21 @@ class ConfigDefinition implements ConfigurationInterface
                     ->isRequired()
                     ->arrayPrototype('array')
                         ->children()
-                            ->integerNode('id')
+                            ->scalarNode('id')
                                 ->isRequired()
-                                ->min(0)
+                                ->validate()
+                                    ->always(function ($value) {
+                                        if (is_int($value)) {
+                                            return $value;
+                                        }
+                                        if (is_string($value) && ctype_digit($value)) {
+                                            return (int) $value;
+                                        }
+                                        throw new \InvalidArgumentException(
+                                            sprintf('The value "%s" is not a valid integer.', $value)
+                                        );
+                                    })
+                                ->end()
                             ->end()
                             ->scalarNode('fileId')
                             ->end()
