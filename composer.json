@@ -11,18 +11,24 @@
     }
   ],
   "require": {
-    "php": "^7.4",
+    "php": "^8.1",
     "keboola/csv": "^1.1",
     "pimple/pimple": "^3.0",
-    "monolog/monolog": "^1.17",
-    "symfony/config": "^4.0",
-    "symfony/process": "^4.0",
+    "monolog/monolog": "^2.1",
+    "symfony/config": "^5.0|^6.0",
+    "symfony/process": "^5.0|^6.0",
     "keboola/php-temp": "^1.0",
-    "keboola/google-sheets-client": "^1.4",
-    "keboola/google-client-bundle": "^5.0.1",
+    "keboola/google-sheets-client": "dev-feature/service-account-support",
+    "keboola/google-client-bundle": "^6.0",
     "graylog2/gelf-php": "^1.5",
     "ext-json": "*"
   },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/keboola/google-sheets-client"
+    }
+  ],
   "require-dev": {
     "phpstan/phpstan": "^1.4",
     "phpunit/phpunit": "^8.0",

@@ -29,30 +29,55 @@ class Application
         };
 
         $container['parameters'] = $this->validateParameters($config['parameters']);
-        if (!isset($config['authorization']['oauth_api']['credentials'])) {
-            throw new UserException('Missing authorization data');
-        }
-        $credentials = $config['authorization']['oauth_api']['credentials'];
-        if (!isset($credentials['#data']) || !isset($credentials['appKey']) || !isset($credentials['#appSecret'])) {
-            throw new UserException('Missing authorization data');
-        }
 
-        $tokenData = json_decode($credentials['#data'], true);
-        $container['google_client'] = function ($container) use ($credentials, $tokenData) {
-            $retries = 7;
-            if ($container['action'] !== 'run') {
-                $retries = 2;
+        // Check for service account credentials first
+        if (isset($config['authorization']['service_account']['#data'])) {
+            $serviceAccountData = json_decode($config['authorization']['service_account']['#data'], true);
+            if (!is_array($serviceAccountData)) {
+                throw new UserException('Invalid service account credentials format');
             }
-            $api = new RestApi(
-                $credentials['appKey'],
-                $credentials['#appSecret'],
-                $tokenData['access_token'],
-                $tokenData['refresh_token'],
-                $container['logger']
-            );
-            $api->setBackoffsCount($retries);
-            return $api;
-        };
+            $container['google_client'] = function ($container) use ($serviceAccountData) {
+                $retries = 7;
+                if ($container['action'] !== 'run') {
+                    $retries = 2;
+                }
+                $scopes = [
+                    'https://www.googleapis.com/auth/drive',
+                    'https://www.googleapis.com/auth/spreadsheets',
+                ];
+                $api = RestApi::createWithServiceAccount($serviceAccountData, $scopes, $container['logger']);
+                $api->setBackoffsCount($retries);
+                return $api;
+            };
+        } elseif (isset($config['authorization']['oauth_api']['credentials'])) {
+            // Fall back to OAuth credentials
+            $credentials = $config['authorization']['oauth_api']['credentials'];
+            if (!isset($credentials['#data']) || !isset($credentials['appKey']) || !isset($credentials['#appSecret'])) {
+                throw new UserException('Missing authorization data');
+            }
+
+            $tokenData = json_decode($credentials['#data'], true);
+            if (!is_array($tokenData) || !isset($tokenData['access_token']) || !isset($tokenData['refresh_token'])) {
+                throw new UserException('Invalid OAuth token data format');
+            }
+            $container['google_client'] = function ($container) use ($credentials, $tokenData) {
+                $retries = 7;
+                if ($container['action'] !== 'run') {
+                    $retries = 2;
+                }
+                $api = RestApi::createWithOAuth(
+                    $credentials['appKey'],
+                    $credentials['#appSecret'],
+                    $tokenData['access_token'],
+                    $tokenData['refresh_token'],
+                    $container['logger'],
+                );
+                $api->setBackoffsCount($retries);
+                return $api;
+            };
+        } else {
+            throw new UserException('Missing authorization data');
+        }
         $container['google_sheets_client'] = function ($container) {
             $client = new Client($container['google_client']);
             $client->setTeamDriveSupport(true);

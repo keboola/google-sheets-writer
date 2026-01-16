@@ -1,4 +1,4 @@
-FROM php:7.4-cli
+FROM php:8.1-cli
 MAINTAINER Miro Cillik <miro@keboola.com>
 
 ENV COMPOSER_PROCESS_TIMEOUT=600
@@ -21,6 +21,6 @@ ADD . /code
 WORKDIR /code
 RUN echo "memory_limit = -1" >> /usr/local/etc/php/php.ini
 RUN echo "date.timezone = \"Europe/Prague\"" >> /usr/local/etc/php/php.ini
-RUN composer selfupdate && composer install --no-interaction
+RUN composer selfupdate && composer update --no-interaction --prefer-dist
 
 CMD php ./run.php --data=/data

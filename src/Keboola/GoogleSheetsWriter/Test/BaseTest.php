@@ -20,8 +20,16 @@ class BaseTest extends TestCase
 
     public function setUp(): void
     {
-        $api = new RestApi(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
-        $api->setCredentials(getenv('ACCESS_TOKEN'), getenv('REFRESH_TOKEN'));
+        $clientId = getenv('CLIENT_ID');
+        $clientSecret = getenv('CLIENT_SECRET');
+        $accessToken = getenv('ACCESS_TOKEN');
+        $refreshToken = getenv('REFRESH_TOKEN');
+
+        if ($clientId === false || $clientSecret === false || $accessToken === false || $refreshToken === false) {
+            $this->markTestSkipped('Missing OAuth credentials in environment variables');
+        }
+
+        $api = RestApi::createWithOAuth($clientId, $clientSecret, $accessToken, $refreshToken);
         $api->setBackoffsCount(2); // Speeds up the tests
         $this->client = new Client($api);
         $this->client->setTeamDriveSupport(true);
@@ -66,11 +74,11 @@ class BaseTest extends TestCase
         $fs->copy($this->dataPath . '/in/tables/titanic_2.csv', $this->tmpDataPath . '/in/tables/titanic_2.csv');
         $fs->copy(
             $this->dataPath . '/in/tables/titanic_2_append.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append.csv'
+            $this->tmpDataPath . '/in/tables/titanic_2_append.csv',
         );
         $fs->copy(
             $this->dataPath . '/in/tables/titanic_2_append_2.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv'
+            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv',
         );
     }
 }
