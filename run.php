@@ -60,7 +60,7 @@ try {
             'errCode' => $e->getCode(),
             'errTrace' => $e->getTraceAsString(),
             'errPrevious' => $e->getPrevious() ? get_class($e->getPrevious()) : '',
-        ]
+        ],
     );
     exit($e->getCode() > 1 ? $e->getCode(): 2);
 } catch (Throwable $e) {
@@ -72,7 +72,7 @@ try {
             'errCode' => $e->getCode(),
             'errTrace' => $e->getTraceAsString(),
             'errPrevious' => $e->getPrevious() ? get_class($e->getPrevious()) : '',
-        ]
+        ],
     );
     exit(2);
 }

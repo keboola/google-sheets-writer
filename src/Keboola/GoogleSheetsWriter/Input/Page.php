@@ -6,7 +6,6 @@ namespace Keboola\GoogleSheetsWriter\Input;
 
 class Page
 {
-    /** @var array */
     private array $values;
 
     private int $offset;

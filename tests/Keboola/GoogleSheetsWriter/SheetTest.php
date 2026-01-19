@@ -23,7 +23,7 @@ class SheetTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         // add another sheet
@@ -65,7 +65,7 @@ class SheetTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -113,7 +113,7 @@ class SheetTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);

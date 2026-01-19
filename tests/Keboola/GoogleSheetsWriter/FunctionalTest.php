@@ -37,7 +37,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -58,7 +58,11 @@ class FunctionalTest extends BaseTest
         ];
 
         $process = $this->runProcess($config);
-        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+        $this->assertEquals(
+            0,
+            $process->getExitCode(),
+            "STDOUT:\n" . $process->getOutput() . "\n\nSTDERR:\n" . $process->getErrorOutput(),
+        );
 
         $response = $this->client->getSpreadsheet($gdFile['id']);
         $values = $this->client->getSpreadsheetValues($gdFile['id'], urlencode('casualties 1+'));
@@ -82,7 +86,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -128,7 +132,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_TEAM_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -171,7 +175,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -214,7 +218,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -254,7 +258,7 @@ class FunctionalTest extends BaseTest
             urlencode($newSheetTitle),
             [
                 'valueRenderOption' => 'UNFORMATTED_VALUE',
-            ]
+            ],
         );
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
@@ -276,7 +280,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -343,7 +347,7 @@ class FunctionalTest extends BaseTest
             urlencode($newSheetTitle),
             [
                 'valueRenderOption' => 'UNFORMATTED_VALUE',
-            ]
+            ],
         );
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
@@ -368,7 +372,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -413,7 +417,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -469,7 +473,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -495,7 +499,7 @@ class FunctionalTest extends BaseTest
         $response = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
         $this->assertEquals(
             $this->csvToArray($this->dataPath . '/in/tables/titanic_2_append.csv'),
-            $response['values']
+            $response['values'],
         );
 
         $this->client->deleteFile($gdFile['id']);
@@ -511,7 +515,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         // add another sheet
@@ -560,7 +564,11 @@ class FunctionalTest extends BaseTest
 
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-        $response = json_decode($process->getOutput(), true);
+        $response = $this->getJsonResponse($process);
+
+        $this->assertIsArray($response, 'Response should be a valid JSON array. Output: ' . $process->getOutput());
+        $this->assertArrayHasKey('spreadsheet', $response, 'Response should contain spreadsheet key');
+        $this->assertArrayHasKey('spreadsheetId', $response['spreadsheet'], 'Spreadsheet should contain spreadsheetId');
 
         $gdFile = $this->client->getSpreadsheet($response['spreadsheet']['spreadsheetId']);
         $this->assertArrayHasKey('spreadsheetId', $gdFile);
@@ -585,7 +593,7 @@ class FunctionalTest extends BaseTest
 
         $process = $this->runProcess($config);
         $this->assertEquals(1, $process->getExitCode(), $process->getErrorOutput());
-        $response = json_decode($process->getOutput(), true);
+        $response = $this->getJsonResponse($process);
         $this->assertEquals('error', $response['status']);
         $this->assertEquals('User Error', $response['error']);
         $this->assertStringContainsString('File or folder not found.', $response['message']);
@@ -605,7 +613,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $config = $this->prepareConfig();
@@ -622,7 +630,7 @@ class FunctionalTest extends BaseTest
 
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-        $response = json_decode($process->getOutput(), true);
+        $response = $this->getJsonResponse($process);
 
         $this->assertArrayHasKey('sheetId', $response['sheet']);
         $this->assertArrayHasKey('title', $response['sheet']);
@@ -650,7 +658,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $config = $this->prepareConfig();
@@ -667,7 +675,7 @@ class FunctionalTest extends BaseTest
 
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-        $response = json_decode($process->getOutput(), true);
+        $response = $this->getJsonResponse($process);
 
         $this->assertArrayHasKey('sheetId', $response['sheet']);
         $this->assertArrayHasKey('title', $response['sheet']);
@@ -690,7 +698,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         // add sheet
@@ -700,7 +708,7 @@ class FunctionalTest extends BaseTest
                 'properties' => [
                     'title' => 'Sheet2',
                 ],
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -719,7 +727,7 @@ class FunctionalTest extends BaseTest
 
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-        $response = json_decode($process->getOutput(), true);
+        $response = $this->getJsonResponse($process);
         $this->assertEquals('ok', $response['status']);
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -742,7 +750,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $config = $this->prepareConfig();
@@ -758,15 +766,12 @@ class FunctionalTest extends BaseTest
 
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
-        $response = json_decode($process->getOutput(), true);
+        $response = $this->getJsonResponse($process);
         $this->assertEquals($gdFile['id'], $response['spreadsheet']['spreadsheetId']);
 
         $this->client->deleteFile($gdFile['id']);
     }
 
-    /**
-     * @param array $config
-     */
     private function runProcess(array $config): Process
     {
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
@@ -776,6 +781,19 @@ class FunctionalTest extends BaseTest
         $process->run();
 
         return $process;
+    }
+
+    /**
+     * @return array<mixed>|null
+     */
+    private function getJsonResponse(Process $process): ?array
+    {
+        // Extract JSON from output (may contain log messages before the JSON)
+        $output = $process->getOutput();
+        $lines = explode("\n", trim($output));
+        $jsonLine = end($lines);
+        $result = json_decode($jsonLine, true);
+        return is_array($result) ? $result : null;
     }
 
     /**
@@ -791,7 +809,7 @@ class FunctionalTest extends BaseTest
         $this->assertStringContainsString(
             'Missing authorization data',
             $process->getErrorOutput(),
-            $process->getOutput()
+            $process->getOutput(),
         );
     }
 
@@ -837,5 +855,52 @@ class FunctionalTest extends BaseTest
                 'refresh_token' => getenv('REFRESH_TOKEN'),
             ]),
         ]]]];
+    }
+
+    public function testServiceAccountAuthentication(): void
+    {
+        if (!getenv('SERVICE_ACCOUNT_JSON')) {
+            $this->markTestSkipped('SERVICE_ACCOUNT_JSON not set');
+        }
+
+        $this->prepareDataFiles();
+
+        // Create sheet
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'Titanic Service Account Test',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ],
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
+
+        // Update sheet using service account config
+        $config = $this->prepareConfigWithServiceAccount();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'Titanic Service Account Test',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => $sheetId,
+            'sheetTitle' => 'service-account-test',
+            'tableId' => 'titanic_2',
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'enabled' => true,
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $response = $this->client->getSpreadsheet($gdFile['id']);
+        $values = $this->client->getSpreadsheetValues($gdFile['id'], 'service-account-test');
+
+        $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
+        $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
+
+        $this->client->deleteFile($gdFile['id']);
     }
 }

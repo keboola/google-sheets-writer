@@ -29,30 +29,60 @@ class Application
         };
 
         $container['parameters'] = $this->validateParameters($config['parameters']);
-        if (!isset($config['authorization']['oauth_api']['credentials'])) {
-            throw new UserException('Missing authorization data');
-        }
-        $credentials = $config['authorization']['oauth_api']['credentials'];
-        if (!isset($credentials['#data']) || !isset($credentials['appKey']) || !isset($credentials['#appSecret'])) {
-            throw new UserException('Missing authorization data');
-        }
 
-        $tokenData = json_decode($credentials['#data'], true);
-        $container['google_client'] = function ($container) use ($credentials, $tokenData) {
-            $retries = 7;
-            if ($container['action'] !== 'run') {
-                $retries = 2;
+        // Check for service account authentication first
+        if (isset($config['parameters']['#serviceAccount']) && !empty($config['parameters']['#serviceAccount'])) {
+            $serviceAccountJson = json_decode($config['parameters']['#serviceAccount'], true);
+            if (!is_array($serviceAccountJson)) {
+                throw new UserException('Invalid service account JSON');
             }
-            $api = new RestApi(
-                $credentials['appKey'],
-                $credentials['#appSecret'],
-                $tokenData['access_token'],
-                $tokenData['refresh_token'],
-                $container['logger']
-            );
-            $api->setBackoffsCount($retries);
-            return $api;
-        };
+            $scopes = [
+                'https://www.googleapis.com/auth/drive',
+                'https://www.googleapis.com/auth/spreadsheets',
+            ];
+
+            $container['google_client'] = function ($container) use ($serviceAccountJson, $scopes, $logger) {
+                $retries = 7;
+                if ($container['action'] !== 'run') {
+                    $retries = 2;
+                }
+                $api = RestApi::createWithServiceAccount(
+                    $serviceAccountJson,
+                    $scopes,
+                    $logger,
+                );
+                $api->setBackoffsCount($retries);
+                return $api;
+            };
+        } elseif (isset($config['authorization']['oauth_api']['credentials'])) {
+            // Fall back to OAuth authentication
+            $credentials = $config['authorization']['oauth_api']['credentials'];
+            if (!isset($credentials['#data']) || !isset($credentials['appKey']) || !isset($credentials['#appSecret'])) {
+                throw new UserException('Missing authorization data');
+            }
+
+            $tokenData = json_decode($credentials['#data'], true);
+            if (!is_array($tokenData)) {
+                throw new UserException('Invalid OAuth token data');
+            }
+            $container['google_client'] = function ($container) use ($credentials, $tokenData, $logger) {
+                $retries = 7;
+                if ($container['action'] !== 'run') {
+                    $retries = 2;
+                }
+                $api = RestApi::createWithOAuth(
+                    $credentials['appKey'],
+                    $credentials['#appSecret'],
+                    $tokenData['access_token'] ?? '',
+                    $tokenData['refresh_token'] ?? '',
+                    $logger,
+                );
+                $api->setBackoffsCount($retries);
+                return $api;
+            };
+        } else {
+            throw new UserException('Missing authorization data (OAuth or Service Account)');
+        }
         $container['google_sheets_client'] = function ($container) {
             $client = new Client($container['google_client']);
             $client->setTeamDriveSupport(true);
@@ -65,7 +95,7 @@ class Application
             return new Writer(
                 $container['google_sheets_client'],
                 $container['input'],
-                $container['logger']
+                $container['logger'],
             );
         };
 
@@ -171,7 +201,7 @@ class Application
             $processor = new Processor();
             return $processor->processConfiguration(
                 new ConfigDefinition(),
-                [$parameters]
+                [$parameters],
             );
         } catch (InvalidConfigurationException $e) {
             throw new UserException($e->getMessage(), 400, $e);

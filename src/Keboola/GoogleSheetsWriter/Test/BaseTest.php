@@ -20,8 +20,21 @@ class BaseTest extends TestCase
 
     public function setUp(): void
     {
-        $api = new RestApi(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
-        $api->setCredentials(getenv('ACCESS_TOKEN'), getenv('REFRESH_TOKEN'));
+        if (getenv('SERVICE_ACCOUNT_JSON')) {
+            $serviceAccountJson = json_decode(getenv('SERVICE_ACCOUNT_JSON'), true);
+            $scopes = [
+                'https://www.googleapis.com/auth/drive',
+                'https://www.googleapis.com/auth/spreadsheets',
+            ];
+            $api = RestApi::createWithServiceAccount($serviceAccountJson, $scopes);
+        } else {
+            $api = RestApi::createWithOAuth(
+                getenv('CLIENT_ID'),
+                getenv('CLIENT_SECRET'),
+                getenv('ACCESS_TOKEN'),
+                getenv('REFRESH_TOKEN'),
+            );
+        }
         $api->setBackoffsCount(2); // Speeds up the tests
         $this->client = new Client($api);
         $this->client->setTeamDriveSupport(true);
@@ -38,6 +51,20 @@ class BaseTest extends TestCase
                 'refresh_token' => getenv('REFRESH_TOKEN'),
             ]),
         ];
+
+        return $config;
+    }
+
+    protected function prepareConfigWithServiceAccount(): array
+    {
+        $config['parameters']['data_dir'] = $this->dataPath;
+
+        if (getenv('SERVICE_ACCOUNT_JSON')) {
+            $config['parameters']['#serviceAccount'] = getenv('SERVICE_ACCOUNT_JSON');
+        } else {
+            // Fall back to OAuth
+            return $this->prepareConfig();
+        }
 
         return $config;
     }
@@ -66,11 +93,11 @@ class BaseTest extends TestCase
         $fs->copy($this->dataPath . '/in/tables/titanic_2.csv', $this->tmpDataPath . '/in/tables/titanic_2.csv');
         $fs->copy(
             $this->dataPath . '/in/tables/titanic_2_append.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append.csv'
+            $this->tmpDataPath . '/in/tables/titanic_2_append.csv',
         );
         $fs->copy(
             $this->dataPath . '/in/tables/titanic_2_append_2.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv'
+            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv',
         );
     }
 }

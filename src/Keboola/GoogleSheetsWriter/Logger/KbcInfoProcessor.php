@@ -18,7 +18,7 @@ class KbcInfoProcessor
                     'kbc_project_id' => getenv('KBC_PROJECTID'),
                     'kbc_config_id' => getenv('KBC_CONFIGID'),
                     'kbc_component_id' => getenv('KBC_COMPONENTID'),
-                ]
+                ],
             );
         }
 
