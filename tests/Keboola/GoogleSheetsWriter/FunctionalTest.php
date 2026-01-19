@@ -37,7 +37,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -82,7 +82,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -128,7 +128,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_TEAM_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -171,7 +171,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -214,7 +214,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -254,7 +254,7 @@ class FunctionalTest extends BaseTest
             urlencode($newSheetTitle),
             [
                 'valueRenderOption' => 'UNFORMATTED_VALUE',
-            ]
+            ],
         );
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
@@ -276,7 +276,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -343,7 +343,7 @@ class FunctionalTest extends BaseTest
             urlencode($newSheetTitle),
             [
                 'valueRenderOption' => 'UNFORMATTED_VALUE',
-            ]
+            ],
         );
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
@@ -368,7 +368,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -413,7 +413,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -469,7 +469,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -495,7 +495,7 @@ class FunctionalTest extends BaseTest
         $response = $this->client->getSpreadsheetValues($gdFile['id'], 'casualties');
         $this->assertEquals(
             $this->csvToArray($this->dataPath . '/in/tables/titanic_2_append.csv'),
-            $response['values']
+            $response['values'],
         );
 
         $this->client->deleteFile($gdFile['id']);
@@ -511,7 +511,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         // add another sheet
@@ -605,7 +605,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $config = $this->prepareConfig();
@@ -650,7 +650,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $config = $this->prepareConfig();
@@ -690,7 +690,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         // add sheet
@@ -700,7 +700,7 @@ class FunctionalTest extends BaseTest
                 'properties' => [
                     'title' => 'Sheet2',
                 ],
-            ]
+            ],
         );
 
         $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
@@ -742,7 +742,7 @@ class FunctionalTest extends BaseTest
             [
                 'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
-            ]
+            ],
         );
 
         $config = $this->prepareConfig();
@@ -764,9 +764,6 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
-    /**
-     * @param array $config
-     */
     private function runProcess(array $config): Process
     {
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));
@@ -791,7 +788,7 @@ class FunctionalTest extends BaseTest
         $this->assertStringContainsString(
             'Missing authorization data',
             $process->getErrorOutput(),
-            $process->getOutput()
+            $process->getOutput(),
         );
     }
 

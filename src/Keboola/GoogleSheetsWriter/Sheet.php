@@ -48,7 +48,7 @@ class Sheet
                 case ConfigDefinition::ACTION_UPDATE:
                     $this->client->clearSpreadsheetValues(
                         $sheet['fileId'],
-                        $this->getRange($sheet['sheetTitle'], $columnCountSrc, 1, $rowCountDst)
+                        $this->getRange($sheet['sheetTitle'], $columnCountSrc, 1, $rowCountDst),
                     );
 
                     // update rows to match source size
@@ -76,7 +76,7 @@ class Sheet
                 $sheet['sheetTitle'],
                 $sheet['sheetId'],
                 $sheet['title'],
-                $sheet['fileId']
+                $sheet['fileId'],
             ));
         }
 
@@ -97,7 +97,7 @@ class Sheet
                 $sheet['sheetTitle'],
                 $this->inputTable->getColumnCount(),
                 $page->getOffset(),
-                $page->getLimit()
+                $page->getLimit(),
             );
             $response = $this->updateValues($sheet, $range, $page->getValues());
             $this->logger->info(
@@ -107,7 +107,7 @@ class Sheet
                     'offset' => $page->getOffset(),
                     'range' => $range,
                     'response' => $response,
-                ]
+                ],
             );
             $responses[] = $response;
         }
@@ -136,7 +136,7 @@ class Sheet
                     'sheet' => $sheet,
                     'offset' => $page->getOffset(),
                     'response' => $response,
-                ]
+                ],
             );
             $responses[] = $response;
         }
@@ -149,7 +149,7 @@ class Sheet
         return $this->client->appendSpreadsheetValues(
             $sheet['fileId'],
             urlencode($sheet['sheetTitle']),
-            $values
+            $values,
         );
     }
 
@@ -158,20 +158,18 @@ class Sheet
         return $this->client->updateSpreadsheetValues(
             $sheet['fileId'],
             $range,
-            $values
+            $values,
         );
     }
 
     /**
      * Update sheets metadata - title, columnCount, rowCount
      *
-     * @param array $sheet
      * @param array $gridProperties
      *      [
      *          'rowCount' => NUMBER OF ROWS
      *          'columnCount' => NUMBER OF COLUMNS
      *      ]
-     * @return array
      * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
      */
     private function updateMetadata(array $sheet, array $gridProperties = []): array
@@ -257,7 +255,7 @@ class Sheet
                 $sheet['title'],
                 $sheet['fileId'],
                 $sheet['sheetTitle'],
-                $sheet['sheetId']
+                $sheet['sheetId'],
             ));
         }
     }
@@ -266,7 +264,7 @@ class Sheet
     {
         $sheetValues = $this->client->getSpreadsheetValues(
             $sheet['fileId'],
-            $this->getRange($sheet['sheetTitle'], $this->inputTable->getColumnCount(), 1, 1)
+            $this->getRange($sheet['sheetTitle'], $this->inputTable->getColumnCount(), 1, 1),
         );
 
         return (!empty($sheetValues['values']));

@@ -6,5 +6,4 @@ namespace Keboola\GoogleSheetsWriter\Exception;
 
 class UserException extends ApplicationException
 {
-
 }

@@ -90,7 +90,7 @@ class Application
             return new Writer(
                 $container['google_sheets_client'],
                 $container['input'],
-                $container['logger']
+                $container['logger'],
             );
         };
 
@@ -196,7 +196,7 @@ class Application
             $processor = new Processor();
             return $processor->processConfiguration(
                 new ConfigDefinition(),
-                [$parameters]
+                [$parameters],
             );
         } catch (InvalidConfigurationException $e) {
             throw new UserException($e->getMessage(), 400, $e);

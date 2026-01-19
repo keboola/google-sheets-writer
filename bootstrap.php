@@ -14,7 +14,7 @@ set_error_handler(
             return false;
         }
         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-    }
+    },
 );
 
 require_once __DIR__ . '/vendor/autoload.php';
