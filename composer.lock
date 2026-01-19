@@ -623,12 +623,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/google-sheets-client.git",
-                "reference": "f401fbebfaddb9d07b6d70482778813629d052e7"
+                "reference": "d20b612795987e352643b284c8ea1f845d8c8eb7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/google-sheets-client/zipball/f401fbebfaddb9d07b6d70482778813629d052e7",
-                "reference": "f401fbebfaddb9d07b6d70482778813629d052e7",
+                "url": "https://api.github.com/repos/keboola/google-sheets-client/zipball/d20b612795987e352643b284c8ea1f845d8c8eb7",
+                "reference": "d20b612795987e352643b284c8ea1f845d8c8eb7",
                 "shasum": ""
             },
             "require": {
@@ -697,7 +697,7 @@
                 "source": "https://github.com/keboola/google-sheets-client/tree/feature/service-account-support",
                 "issues": "https://github.com/keboola/google-sheets-client/issues"
             },
-            "time": "2026-01-19T07:55:40+00:00"
+            "time": "2026-01-19T09:15:35+00:00"
         },
         {
             "name": "keboola/php-temp",
