@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\GoogleSheetsWriter;
 
+use Exception;
 use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Monolog\Logger;
@@ -84,6 +85,11 @@ class Writer
     public function createSpreadsheet(array $file): array
     {
         $gdFile = $this->createFileMetadata($file);
+
+        if (!isset($gdFile['id'])) {
+            $this->logger->error('Failed to create file metadata', ['response' => $gdFile]);
+            throw new Exception('File creation failed: no file ID returned');
+        }
 
         return $this->driveApi->getSpreadsheet($gdFile['id']);
     }

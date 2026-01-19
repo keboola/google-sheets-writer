@@ -562,6 +562,9 @@ class FunctionalTest extends BaseTest
         $this->assertEquals(0, $process->getExitCode(), $process->getErrorOutput());
         $response = json_decode($process->getOutput(), true);
 
+        $this->assertArrayHasKey('spreadsheet', $response, 'Response should contain spreadsheet key');
+        $this->assertArrayHasKey('spreadsheetId', $response['spreadsheet'], 'Spreadsheet should contain spreadsheetId');
+
         $gdFile = $this->client->getSpreadsheet($response['spreadsheet']['spreadsheetId']);
         $this->assertArrayHasKey('spreadsheetId', $gdFile);
         $this->assertEquals('titanic', $gdFile['properties']['title']);
