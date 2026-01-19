@@ -76,56 +76,6 @@ parameters:
 			path: src/Keboola/GoogleSheetsWriter/Logger/LineFormatter.php
 
 		-
-			message: "#^Cannot access offset 'error' on mixed\\.$#"
-			count: 1
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Cannot access offset 'message' on mixed\\.$#"
-			count: 1
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Cannot access offset 'sheet' on mixed\\.$#"
-			count: 4
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Cannot access offset 'spreadsheet' on mixed\\.$#"
-			count: 3
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Cannot access offset 'spreadsheetId' on mixed\\.$#"
-			count: 3
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Cannot access offset 'status' on mixed\\.$#"
-			count: 2
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:deleteFile\\(\\) expects string, mixed given\\.$#"
-			count: 1
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getSpreadsheet\\(\\) expects string, mixed given\\.$#"
-			count: 1
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#2 \\$array of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertArrayHasKey\\(\\) expects array\\|ArrayAccess, mixed given\\.$#"
-			count: 4
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#2 \\$haystack of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertStringContainsString\\(\\) expects string, mixed given\\.$#"
-			count: 1
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
 			message: "#^Parameter \\#1 \\$sheets of method Keboola\\\\GoogleSheetsWriter\\\\Sheet\\:\\:findSheetPropertiesById\\(\\) expects array, mixed given\\.$#"
 			count: 1
 			path: src/Keboola/GoogleSheetsWriter/Sheet.php
@@ -136,17 +86,17 @@ parameters:
 			path: src/Keboola/GoogleSheetsWriter/Writer.php
 
 		-
+			message: "#^Cannot access offset 'addSheet' on mixed\\.$#"
+			count: 1
+			path: src/Keboola/GoogleSheetsWriter/Writer.php
+
+		-
 			message: "#^Cannot access offset 'properties' on mixed\\.$#"
 			count: 3
 			path: src/Keboola/GoogleSheetsWriter/Writer.php
 
 		-
 			message: "#^Cannot access offset 'title' on mixed\\.$#"
-			count: 1
-			path: src/Keboola/GoogleSheetsWriter/Writer.php
-
-		-
-			message: "#^Cannot access offset 'addSheet' on mixed\\.$#"
 			count: 1
 			path: src/Keboola/GoogleSheetsWriter/Writer.php
 
@@ -166,18 +116,18 @@ parameters:
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
+			message: "#^Cannot access offset 'error' on mixed\\.$#"
+			count: 1
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
 			message: "#^Cannot access offset 'id' on mixed\\.$#"
 			count: 1
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
-			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:deleteFile\\(\\) expects string, mixed given\\.$#"
-			count: 11
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getSpreadsheet\\(\\) expects string, mixed given\\.$#"
-			count: 19
+			message: "#^Cannot access offset 'message' on mixed\\.$#"
+			count: 1
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
@@ -186,18 +136,28 @@ parameters:
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
+			message: "#^Cannot access offset 'sheet' on mixed\\.$#"
+			count: 4
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
 			message: "#^Cannot access offset 'sheetId' on mixed\\.$#"
 			count: 11
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
-			message: "#^Cannot access offset 0 on mixed\\.$#"
-			count: 16
+			message: "#^Cannot access offset 'spreadsheet' on mixed\\.$#"
+			count: 4
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
-			message: "#^Parameter \\#1 \\$spreadsheetId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getSpreadsheetValues\\(\\) expects string, mixed given\\.$#"
-			count: 10
+			message: "#^Cannot access offset 'spreadsheetId' on mixed\\.$#"
+			count: 3
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Cannot access offset 'status' on mixed\\.$#"
+			count: 2
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
@@ -206,23 +166,8 @@ parameters:
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
-			message: "#^Cannot cast mixed to string\\.$#"
-			count: 3
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getFile\\(\\) expects string, mixed given\\.$#"
-			count: 2
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#2 \\$haystack of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertCount\\(\\) expects Countable\\|iterable, mixed given\\.$#"
-			count: 6
-			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$spreadsheetId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:addSheet\\(\\) expects string, mixed given\\.$#"
-			count: 2
+			message: "#^Cannot access offset 0 on mixed\\.$#"
+			count: 16
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
@@ -231,14 +176,49 @@ parameters:
 			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
-			message: "#^Parameter \\#1 \\$spreadsheetId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:addSheet\\(\\) expects string, mixed given\\.$#"
-			count: 1
-			path: tests/Keboola/GoogleSheetsWriter/SheetTest.php
+			message: "#^Cannot cast mixed to string\\.$#"
+			count: 3
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:deleteFile\\(\\) expects string, mixed given\\.$#"
+			count: 12
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getFile\\(\\) expects string, mixed given\\.$#"
+			count: 2
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
 			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getSpreadsheet\\(\\) expects string, mixed given\\.$#"
-			count: 3
-			path: tests/Keboola/GoogleSheetsWriter/SheetTest.php
+			count: 20
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$spreadsheetId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:addSheet\\(\\) expects string, mixed given\\.$#"
+			count: 2
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$spreadsheetId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getSpreadsheetValues\\(\\) expects string, mixed given\\.$#"
+			count: 10
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$array of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertArrayHasKey\\(\\) expects array\\|ArrayAccess, mixed given\\.$#"
+			count: 6
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$haystack of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertCount\\(\\) expects Countable\\|iterable, mixed given\\.$#"
+			count: 6
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
+
+		-
+			message: "#^Parameter \\#2 \\$haystack of method PHPUnit\\\\Framework\\\\Assert\\:\\:assertStringContainsString\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: tests/Keboola/GoogleSheetsWriter/FunctionalTest.php
 
 		-
 			message: "#^Cannot access offset 'properties' on mixed\\.$#"
@@ -258,4 +238,14 @@ parameters:
 		-
 			message: "#^Cannot cast mixed to string\\.$#"
 			count: 2
+			path: tests/Keboola/GoogleSheetsWriter/SheetTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$fileId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:getSpreadsheet\\(\\) expects string, mixed given\\.$#"
+			count: 3
+			path: tests/Keboola/GoogleSheetsWriter/SheetTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$spreadsheetId of method Keboola\\\\GoogleSheetsClient\\\\Client\\:\\:addSheet\\(\\) expects string, mixed given\\.$#"
+			count: 1
 			path: tests/Keboola/GoogleSheetsWriter/SheetTest.php
