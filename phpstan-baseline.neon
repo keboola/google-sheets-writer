@@ -86,11 +86,6 @@ parameters:
 			path: src/Keboola/GoogleSheetsWriter/Test/BaseTest.php
 
 		-
-			message: "#^Parameter \\#1 \\$serviceAccountConfig of static method Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi\\:\\:createWithServiceAccount\\(\\) expects array, mixed given\\.$#"
-			count: 1
-			path: src/Keboola/GoogleSheetsWriter/Test/BaseTest.php
-
-		-
 			message: "#^Parameter \\#2 \\$clientSecret of static method Keboola\\\\Google\\\\ClientBundle\\\\Google\\\\RestApi\\:\\:createWithOAuth\\(\\) expects string, string\\|false given\\.$#"
 			count: 1
 			path: src/Keboola/GoogleSheetsWriter/Test/BaseTest.php

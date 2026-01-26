@@ -13,6 +13,7 @@ env:
     CLIENT_SECRET: '${{ secrets.CLIENT_SECRET }}'
     ACCESS_TOKEN: '${{ secrets.ACCESS_TOKEN }}'
     REFRESH_TOKEN: '${{ secrets.REFRESH_TOKEN }}'
+    SERVICE_ACCOUNT_JSON: '${{ secrets.SERVICE_ACCOUNT_JSON }}'
     GOOGLE_DRIVE_FOLDER: 10EHVRPVJTjHtqCJJbTLFBoge0skjc0tR
     GOOGLE_DRIVE_TEAM_FOLDER: 0ADr3AHEcUW6NUk9PVA
 
@@ -87,6 +88,7 @@ jobs:
                     -e CLIENT_SECRET \
                     -e ACCESS_TOKEN \
                     -e REFRESH_TOKEN \
+                    -e SERVICE_ACCOUNT_JSON \
                     -e GOOGLE_DRIVE_FOLDER \
                     -e GOOGLE_DRIVE_TEAM_FOLDER \
                     ${{env.APP_IMAGE}} composer ci

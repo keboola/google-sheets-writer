@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "721895deaf449ef062a46e2bee34b382",
+    "content-hash": "844e96965697b904412cb59003199850",
     "packages": [
         {
             "name": "firebase/php-jwt",
@@ -619,16 +619,16 @@
         },
         {
             "name": "keboola/google-sheets-client",
-            "version": "dev-feature/service-account-support",
+            "version": "1.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/google-sheets-client.git",
-                "reference": "d20b612795987e352643b284c8ea1f845d8c8eb7"
+                "reference": "bb49e6de657024a93d6f77c4994887f965a0269e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/google-sheets-client/zipball/d20b612795987e352643b284c8ea1f845d8c8eb7",
-                "reference": "d20b612795987e352643b284c8ea1f845d8c8eb7",
+                "url": "https://api.github.com/repos/keboola/google-sheets-client/zipball/bb49e6de657024a93d6f77c4994887f965a0269e",
+                "reference": "bb49e6de657024a93d6f77c4994887f965a0269e",
                 "shasum": ""
             },
             "require": {
@@ -669,9 +669,9 @@
             ],
             "support": {
                 "issues": "https://github.com/keboola/google-sheets-client/issues",
-                "source": "https://github.com/keboola/google-sheets-client/tree/feature/service-account-support"
+                "source": "https://github.com/keboola/google-sheets-client/tree/1.6.0"
             },
-            "time": "2026-01-19T09:15:35+00:00"
+            "time": "2026-01-26T11:22:33+00:00"
         },
         {
             "name": "keboola/php-temp",
@@ -3748,9 +3748,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "keboola/google-sheets-client": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

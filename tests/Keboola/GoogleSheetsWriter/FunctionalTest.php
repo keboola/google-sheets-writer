@@ -6,6 +6,7 @@ namespace Keboola\GoogleSheetsWriter;
 
 use Generator;
 use Keboola\Csv\CsvFile;
+use Keboola\Google\ClientBundle\Google\RestApi;
 use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Test\BaseTest;
@@ -58,11 +59,7 @@ class FunctionalTest extends BaseTest
         ];
 
         $process = $this->runProcess($config);
-        $this->assertEquals(
-            0,
-            $process->getExitCode(),
-            "STDOUT:\n" . $process->getOutput() . "\n\nSTDERR:\n" . $process->getErrorOutput(),
-        );
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
         $response = $this->client->getSpreadsheet($gdFile['id']);
         $values = $this->client->getSpreadsheetValues($gdFile['id'], urlencode('casualties 1+'));
@@ -859,23 +856,34 @@ class FunctionalTest extends BaseTest
 
     public function testServiceAccountAuthentication(): void
     {
-        if (!getenv('SERVICE_ACCOUNT_JSON')) {
-            $this->markTestSkipped('SERVICE_ACCOUNT_JSON not set');
-        }
+        $this->assertNotFalse(getenv('SERVICE_ACCOUNT_JSON'), 'SERVICE_ACCOUNT_JSON environment variable must be set');
 
         $this->prepareDataFiles();
 
-        // Create sheet
-        $gdFile = $this->client->createFile(
+        // Create a client with service account credentials for setup and verification
+        $serviceAccountJson = json_decode(getenv('SERVICE_ACCOUNT_JSON'), true);
+        $this->assertIsArray($serviceAccountJson, 'SERVICE_ACCOUNT_JSON must contain valid JSON');
+
+        $scopes = [
+            'https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/spreadsheets',
+        ];
+        $serviceAccountApi = RestApi::createWithServiceAccount($serviceAccountJson, $scopes);
+        $serviceAccountApi->setBackoffsCount(2);
+        $serviceAccountClient = new Client($serviceAccountApi);
+        $serviceAccountClient->setTeamDriveSupport(true);
+
+        // Create sheet using service account
+        $gdFile = $serviceAccountClient->createFile(
             $this->dataPath . '/in/tables/titanic_1.csv',
             'Titanic Service Account Test',
             [
-                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'parents' => [getenv('GOOGLE_DRIVE_TEAM_FOLDER')],
                 'mimeType' => Client::MIME_TYPE_SPREADSHEET,
             ],
         );
 
-        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $gdSpreadsheet = $serviceAccountClient->getSpreadsheet($gdFile['id']);
         $sheetId = $gdSpreadsheet['sheets'][0]['properties']['sheetId'];
 
         // Update sheet using service account config
@@ -884,7 +892,7 @@ class FunctionalTest extends BaseTest
             'id' => 0,
             'fileId' => $gdFile['id'],
             'title' => 'Titanic Service Account Test',
-            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_TEAM_FOLDER')],
             'sheetId' => $sheetId,
             'sheetTitle' => 'service-account-test',
             'tableId' => 'titanic_2',
@@ -895,12 +903,12 @@ class FunctionalTest extends BaseTest
         $process = $this->runProcess($config);
         $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
 
-        $response = $this->client->getSpreadsheet($gdFile['id']);
-        $values = $this->client->getSpreadsheetValues($gdFile['id'], 'service-account-test');
+        $response = $serviceAccountClient->getSpreadsheet($gdFile['id']);
+        $values = $serviceAccountClient->getSpreadsheetValues($gdFile['id'], 'service-account-test');
 
         $this->assertEquals($gdFile['id'], $response['spreadsheetId']);
         $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
 
-        $this->client->deleteFile($gdFile['id']);
+        $serviceAccountClient->deleteFile($gdFile['id']);
     }
 }

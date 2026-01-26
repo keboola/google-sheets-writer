@@ -18,7 +18,7 @@
     "symfony/config": "^5.4 || ^6.0",
     "symfony/process": "^5.4 || ^6.0",
     "keboola/php-temp": "^1.0",
-    "keboola/google-sheets-client": "dev-feature/service-account-support",
+    "keboola/google-sheets-client": "^1.6",
     "keboola/google-client-bundle": "^6.0",
     "graylog2/gelf-php": "^1.5",
     "ext-json": "*"

@@ -20,21 +20,12 @@ class BaseTest extends TestCase
 
     public function setUp(): void
     {
-        if (getenv('SERVICE_ACCOUNT_JSON')) {
-            $serviceAccountJson = json_decode(getenv('SERVICE_ACCOUNT_JSON'), true);
-            $scopes = [
-                'https://www.googleapis.com/auth/drive',
-                'https://www.googleapis.com/auth/spreadsheets',
-            ];
-            $api = RestApi::createWithServiceAccount($serviceAccountJson, $scopes);
-        } else {
-            $api = RestApi::createWithOAuth(
-                getenv('CLIENT_ID'),
-                getenv('CLIENT_SECRET'),
-                getenv('ACCESS_TOKEN'),
-                getenv('REFRESH_TOKEN'),
-            );
-        }
+        $api = RestApi::createWithOAuth(
+            getenv('CLIENT_ID'),
+            getenv('CLIENT_SECRET'),
+            getenv('ACCESS_TOKEN'),
+            getenv('REFRESH_TOKEN'),
+        );
         $api->setBackoffsCount(2); // Speeds up the tests
         $this->client = new Client($api);
         $this->client->setTeamDriveSupport(true);
@@ -58,13 +49,7 @@ class BaseTest extends TestCase
     protected function prepareConfigWithServiceAccount(): array
     {
         $config['parameters']['data_dir'] = $this->dataPath;
-
-        if (getenv('SERVICE_ACCOUNT_JSON')) {
-            $config['parameters']['#serviceAccount'] = getenv('SERVICE_ACCOUNT_JSON');
-        } else {
-            // Fall back to OAuth
-            return $this->prepareConfig();
-        }
+        $config['parameters']['#serviceAccount'] = getenv('SERVICE_ACCOUNT_JSON');
 
         return $config;
     }
