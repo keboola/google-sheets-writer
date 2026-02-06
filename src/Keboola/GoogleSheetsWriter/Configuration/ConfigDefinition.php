@@ -20,14 +20,17 @@ class ConfigDefinition implements ConfigurationInterface
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('parameters');
+        $treeBuilder = new TreeBuilder('parameters');
+        $rootNode = $treeBuilder->getRootNode();
 
         $rootNode
             ->children()
                 ->scalarNode('data_dir')
                     ->isRequired()
                     ->cannotBeEmpty()
+                ->end()
+                ->scalarNode('#serviceAccount')
+                    ->info('Service account credentials JSON (encrypted)')
                 ->end()
                 ->arrayNode('tables')
                     ->isRequired()

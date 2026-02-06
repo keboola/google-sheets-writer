@@ -20,8 +20,12 @@ class BaseTest extends TestCase
 
     public function setUp(): void
     {
-        $api = new RestApi(getenv('CLIENT_ID'), getenv('CLIENT_SECRET'));
-        $api->setCredentials(getenv('ACCESS_TOKEN'), getenv('REFRESH_TOKEN'));
+        $api = RestApi::createWithOAuth(
+            getenv('CLIENT_ID'),
+            getenv('CLIENT_SECRET'),
+            getenv('ACCESS_TOKEN'),
+            getenv('REFRESH_TOKEN'),
+        );
         $api->setBackoffsCount(2); // Speeds up the tests
         $this->client = new Client($api);
         $this->client->setTeamDriveSupport(true);
@@ -38,6 +42,14 @@ class BaseTest extends TestCase
                 'refresh_token' => getenv('REFRESH_TOKEN'),
             ]),
         ];
+
+        return $config;
+    }
+
+    protected function prepareConfigWithServiceAccount(): array
+    {
+        $config['parameters']['data_dir'] = $this->dataPath;
+        $config['parameters']['#serviceAccount'] = getenv('SERVICE_ACCOUNT_JSON');
 
         return $config;
     }
@@ -66,11 +78,11 @@ class BaseTest extends TestCase
         $fs->copy($this->dataPath . '/in/tables/titanic_2.csv', $this->tmpDataPath . '/in/tables/titanic_2.csv');
         $fs->copy(
             $this->dataPath . '/in/tables/titanic_2_append.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append.csv'
+            $this->tmpDataPath . '/in/tables/titanic_2_append.csv',
         );
         $fs->copy(
             $this->dataPath . '/in/tables/titanic_2_append_2.csv',
-            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv'
+            $this->tmpDataPath . '/in/tables/titanic_2_append_2.csv',
         );
     }
 }

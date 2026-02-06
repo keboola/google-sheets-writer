@@ -1,4 +1,4 @@
-FROM php:7.4-cli
+FROM php:8.1-cli
 MAINTAINER Miro Cillik <miro@keboola.com>
 
 ENV COMPOSER_PROCESS_TIMEOUT=600

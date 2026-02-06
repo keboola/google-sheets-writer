@@ -52,13 +52,13 @@ class Writer
                 $this->logger->info(sprintf(
                     'Processing sheet "%s" in file "%s"',
                     $sheetCfg['sheetTitle'],
-                    $sheetCfg['title']
+                    $sheetCfg['title'],
                 ));
 
                 $sheetWriter = new Sheet(
                     $this->driveApi,
                     $this->input->getTable($sheetCfg['tableId']),
-                    $this->logger
+                    $this->logger,
                 );
                 $sheetWriter->process($sheetCfg);
             }
@@ -109,7 +109,7 @@ class Writer
                 'properties' => [
                     'title' => $sheet['sheetTitle'],
                 ],
-            ]
+            ],
         );
         $this->logger->debug('add sheet', [
             'response' => $addSheetResponse,
@@ -122,7 +122,7 @@ class Writer
     {
         return $this->driveApi->deleteSheet(
             (string) $sheet['fileId'],
-            (string) $sheet['sheetId']
+            (string) $sheet['sheetId'],
         );
     }
 }

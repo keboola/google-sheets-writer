@@ -13,8 +13,9 @@ env:
     CLIENT_SECRET: '${{ secrets.CLIENT_SECRET }}'
     ACCESS_TOKEN: '${{ secrets.ACCESS_TOKEN }}'
     REFRESH_TOKEN: '${{ secrets.REFRESH_TOKEN }}'
-    GOOGLE_DRIVE_FOLDER: 1uEQTNmMj7VAepKf7GQOxpeJiApTZJS4x
-    GOOGLE_DRIVE_TEAM_FOLDER: 1L-JJubV4T2UEucZ2qUDdKCuI_TTByXgo
+    SERVICE_ACCOUNT_JSON: '${{ secrets.SERVICE_ACCOUNT_JSON }}'
+    GOOGLE_DRIVE_FOLDER: 10EHVRPVJTjHtqCJJbTLFBoge0skjc0tR
+    GOOGLE_DRIVE_TEAM_FOLDER: 0ADr3AHEcUW6NUk9PVA
 
     DOCKERHUB_USER: '${{ secrets.DOCKERHUB_USER }}'
     DOCKERHUB_TOKEN: '${{ secrets.DOCKERHUB_TOKEN }}'
@@ -87,6 +88,7 @@ jobs:
                     -e CLIENT_SECRET \
                     -e ACCESS_TOKEN \
                     -e REFRESH_TOKEN \
+                    -e SERVICE_ACCOUNT_JSON \
                     -e GOOGLE_DRIVE_FOLDER \
                     -e GOOGLE_DRIVE_TEAM_FOLDER \
                     ${{env.APP_IMAGE}} composer ci
