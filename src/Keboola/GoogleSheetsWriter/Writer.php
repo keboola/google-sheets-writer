@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\GoogleSheetsWriter;
 
 use Keboola\GoogleSheetsClient\Client;
+use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
@@ -49,6 +50,10 @@ class Writer
     {
         foreach ($sheets as $sheetCfg) {
             if ($sheetCfg['enabled']) {
+                if ($sheetCfg['action'] === ConfigDefinition::ACTION_CREATE) {
+                    $sheetCfg = $this->resolveCreateAction($sheetCfg);
+                }
+
                 $this->logger->info(sprintf(
                     'Processing sheet "%s" in file "%s"',
                     $sheetCfg['sheetTitle'],
@@ -63,6 +68,48 @@ class Writer
                 $sheetWriter->process($sheetCfg);
             }
         }
+    }
+
+    private function resolveCreateAction(array $sheetCfg): array
+    {
+        $spreadsheet = $this->driveApi->getSpreadsheet($sheetCfg['fileId']);
+
+        foreach ($spreadsheet['sheets'] as $gdSheet) {
+            if ($gdSheet['properties']['title'] === $sheetCfg['sheetTitle']) {
+                $sheetCfg['sheetId'] = (int) $gdSheet['properties']['sheetId'];
+                $sheetCfg['action'] = ConfigDefinition::ACTION_APPEND;
+                $this->logger->info(sprintf(
+                    'Sheet "%s" found in spreadsheet, appending data',
+                    $sheetCfg['sheetTitle'],
+                ));
+                return $sheetCfg;
+            }
+        }
+
+        $addSheetResponse = $this->driveApi->addSheet(
+            $sheetCfg['fileId'],
+            [
+                'properties' => [
+                    'title' => $sheetCfg['sheetTitle'],
+                ],
+            ],
+        );
+        $sheetCfg['sheetId'] = (int) $addSheetResponse['replies'][0]['addSheet']['properties']['sheetId'];
+        $sheetCfg['action'] = ConfigDefinition::ACTION_UPDATE;
+        $this->logger->info(sprintf(
+            'Sheet "%s" not found in spreadsheet, creating new tab',
+            $sheetCfg['sheetTitle'],
+        ));
+
+        $tabCount = count($spreadsheet['sheets']) + 1;
+        if ($tabCount > 150) {
+            $this->logger->warning(sprintf(
+                'Spreadsheet has %d tabs. Google Sheets limit is 200.',
+                $tabCount,
+            ));
+        }
+
+        return $sheetCfg;
     }
 
     public function createFileMetadata(array $file): array
