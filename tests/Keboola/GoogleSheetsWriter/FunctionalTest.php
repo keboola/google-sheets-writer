@@ -769,6 +769,154 @@ class FunctionalTest extends BaseTest
         $this->client->deleteFile($gdFile['id']);
     }
 
+    /**
+     * sheetMode "add" with a non-existent sheet title creates a new sheet
+     */
+    public function testSheetModeAddCreateNewSheet(): void
+    {
+        $this->prepareDataFiles();
+
+        // create spreadsheet with default Sheet1
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'titanic',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ],
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $originalSheetTitle = $gdSpreadsheet['sheets'][0]['properties']['title'];
+
+        $newSheetTitle = 'new-sheet-' . uniqid();
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'titanic',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => 0,
+            'sheetTitle' => $newSheetTitle,
+            'tableId' => 'titanic_2',
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'sheetMode' => ConfigDefinition::SHEET_MODE_ADD,
+            'enabled' => true,
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $response = $this->client->getSpreadsheet($gdFile['id']);
+
+        // original sheet is preserved
+        $this->assertCount(2, $response['sheets']);
+        $this->assertEquals($originalSheetTitle, $response['sheets'][0]['properties']['title']);
+
+        // new sheet was created with correct data
+        $this->assertEquals($newSheetTitle, $response['sheets'][1]['properties']['title']);
+        $values = $this->client->getSpreadsheetValues($gdFile['id'], urlencode($newSheetTitle));
+        $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
+
+        $this->client->deleteFile($gdFile['id']);
+    }
+
+    /**
+     * sheetMode "add" with an existing sheet title reuses the existing sheet
+     */
+    public function testSheetModeAddExistingSheet(): void
+    {
+        $this->prepareDataFiles();
+
+        // create spreadsheet
+        $gdFile = $this->client->createFile(
+            $this->dataPath . '/in/tables/titanic_1.csv',
+            'titanic',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ],
+        );
+
+        $gdSpreadsheet = $this->client->getSpreadsheet($gdFile['id']);
+        $existingSheetTitle = $gdSpreadsheet['sheets'][0]['properties']['title'];
+
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'titanic',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => 0,
+            'sheetTitle' => $existingSheetTitle,
+            'tableId' => 'titanic_2',
+            'action' => ConfigDefinition::ACTION_UPDATE,
+            'sheetMode' => ConfigDefinition::SHEET_MODE_ADD,
+            'enabled' => true,
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $response = $this->client->getSpreadsheet($gdFile['id']);
+
+        // no new sheet created
+        $this->assertCount(1, $response['sheets']);
+        $this->assertEquals($existingSheetTitle, $response['sheets'][0]['properties']['title']);
+
+        // data was written
+        $values = $this->client->getSpreadsheetValues($gdFile['id'], urlencode($existingSheetTitle));
+        $this->assertEquals($this->csvToArray($this->dataPath . '/in/tables/titanic_2.csv'), $values['values']);
+
+        $this->client->deleteFile($gdFile['id']);
+    }
+
+    /**
+     * sheetMode "add" with action "append" on a new sheet
+     */
+    public function testSheetModeAddAppend(): void
+    {
+        $this->prepareDataFiles();
+
+        // create spreadsheet with default sheet
+        $gdFile = $this->client->createFileMetadata(
+            'titanic',
+            [
+                'parents' => [getenv('GOOGLE_DRIVE_FOLDER')],
+                'mimeType' => Client::MIME_TYPE_SPREADSHEET,
+            ],
+        );
+
+        $newSheetTitle = 'append-sheet-' . uniqid();
+        $config = $this->prepareConfig();
+        $config['parameters']['tables'][] = [
+            'id' => 0,
+            'fileId' => $gdFile['id'],
+            'title' => 'titanic',
+            'folder' => ['id' => getenv('GOOGLE_DRIVE_FOLDER')],
+            'sheetId' => 0,
+            'sheetTitle' => $newSheetTitle,
+            'tableId' => 'titanic_2_append',
+            'action' => ConfigDefinition::ACTION_APPEND,
+            'sheetMode' => ConfigDefinition::SHEET_MODE_ADD,
+            'enabled' => true,
+        ];
+
+        $process = $this->runProcess($config);
+        $this->assertEquals(0, $process->getExitCode(), $process->getOutput());
+
+        $response = $this->client->getSpreadsheet($gdFile['id']);
+        $this->assertCount(2, $response['sheets']);
+
+        $values = $this->client->getSpreadsheetValues($gdFile['id'], urlencode($newSheetTitle));
+        $this->assertEquals(
+            $this->csvToArray($this->dataPath . '/in/tables/titanic_2_append.csv'),
+            $values['values'],
+        );
+
+        $this->client->deleteFile($gdFile['id']);
+    }
+
     private function runProcess(array $config): Process
     {
         file_put_contents($this->tmpDataPath . '/config.json', json_encode($config));

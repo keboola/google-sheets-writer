@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\GoogleSheetsWriter;
 
 use Keboola\GoogleSheetsClient\Client;
+use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
@@ -54,6 +55,11 @@ class Writer
                     $sheetCfg['sheetTitle'],
                     $sheetCfg['title'],
                 ));
+
+                if ($sheetCfg['sheetMode'] === ConfigDefinition::SHEET_MODE_ADD) {
+                    $sheetProperties = $this->addSheet($sheetCfg);
+                    $sheetCfg['sheetId'] = (int) $sheetProperties['sheetId'];
+                }
 
                 $sheetWriter = new Sheet(
                     $this->driveApi,

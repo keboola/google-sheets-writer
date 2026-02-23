@@ -13,6 +13,9 @@ class ConfigDefinition implements ConfigurationInterface
     public const ACTION_UPDATE = 'update';
     public const ACTION_APPEND = 'append';
 
+    public const SHEET_MODE_REPLACE = 'replace';
+    public const SHEET_MODE_ADD = 'add';
+
     /**
      * Generates the configuration tree builder.
      *
@@ -69,6 +72,10 @@ class ConfigDefinition implements ConfigurationInterface
                                 ->end()
                             ->end()
                             ->scalarNode('sheetTitle')
+                            ->end()
+                            ->enumNode('sheetMode')
+                                ->values(['replace', 'add'])
+                                ->defaultValue('replace')
                             ->end()
                         ->end()
                     ->end()
