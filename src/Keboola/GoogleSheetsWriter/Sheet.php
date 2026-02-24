@@ -37,6 +37,13 @@ class Sheet
             $sheetProperties = $this->getSheetProperties($sheet['fileId'], $sheet['sheetId']);
             $columnCountSrc = $this->inputTable->getColumnCount();
             $rowCountSrc = $this->inputTable->getRowCount();
+            $this->logger->info(sprintf(
+                'Sheet process: sheetId=%s, columnCountSrc=%d, rowCountSrc=%d, inputFile=%s',
+                $sheet['sheetId'],
+                $columnCountSrc,
+                $rowCountSrc,
+                $this->inputTable->getPathname(),
+            ));
             $this->preFlightChecks($sheet, $sheetProperties, $columnCountSrc, $rowCountSrc);
 
             // update columns
@@ -99,7 +106,18 @@ class Sheet
                 $page->getOffset(),
                 $page->getLimit(),
             );
-            $response = $this->updateValues($sheet, $range, $page->getValues());
+            $pageValues = $page->getValues();
+            $this->logger->info(sprintf(
+                'Update: sending %d rows to range %s',
+                count($pageValues),
+                $range,
+            ));
+            $response = $this->updateValues($sheet, $range, $pageValues);
+            $this->logger->info(sprintf(
+                'Update response: updatedRows=%s, updatedCells=%s',
+                $response['updatedRows'] ?? 'N/A',
+                $response['updatedCells'] ?? 'N/A',
+            ));
             $this->logger->info(
                 sprintf('Updating data in sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
                 [
@@ -129,7 +147,18 @@ class Sheet
                 array_shift($values);
             }
 
+            $this->logger->info(sprintf(
+                'Append: sending %d rows, sheetHasHeader=%s',
+                count($values),
+                $sheetHasHeader ? 'true' : 'false',
+            ));
             $response = $this->appendValues($sheet, $values);
+            $this->logger->info(sprintf(
+                'Append response: updatedRows=%s, updatedCells=%s, tableRange=%s',
+                $response['updates']['updatedRows'] ?? 'N/A',
+                $response['updates']['updatedCells'] ?? 'N/A',
+                $response['tableRange'] ?? 'N/A',
+            ));
             $this->logger->info(
                 sprintf('Appending data to sheet "%s" in file "%s"', $sheet['sheetTitle'], $sheet['fileId']),
                 [
