@@ -146,9 +146,10 @@ class Sheet
 
     private function appendValues(array $sheet, array $values): array
     {
+        $range = urlencode($sheet['sheetTitle']) . '!A1';
         return $this->client->appendSpreadsheetValues(
             $sheet['fileId'],
-            urlencode($sheet['sheetTitle']),
+            $range,
             $values,
         );
     }
