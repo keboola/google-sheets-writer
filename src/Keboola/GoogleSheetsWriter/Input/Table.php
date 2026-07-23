@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Keboola\GoogleSheetsWriter\Input;
 
 use Keboola\Csv\CsvFile;
+use Keboola\Csv\Exception as CsvException;
+use Keboola\GoogleSheetsWriter\Exception\UserException;
 
 class Table
 {
@@ -22,9 +24,18 @@ class Table
     {
         $this->dataDir = $dataDir;
         $this->tableId = $tableId;
-        $this->csvFile = new CsvFile($this->getPathname());
-        $this->rowCount = $this->countLines();
-        $this->columnCount = $this->csvFile->getColumnsCount();
+        try {
+            $this->csvFile = new CsvFile($this->getPathname());
+            $this->rowCount = $this->countLines();
+            $this->columnCount = $this->csvFile->getColumnsCount();
+        } catch (CsvException $e) {
+            throw new UserException(sprintf(
+                'Input table "%s" could not be read (%s). Please check the input mapping and make '
+                . 'sure the table is present on the writer input so it can be written to Google Sheets.',
+                $this->tableId,
+                $e->getMessage(),
+            ), 0, $e);
+        }
     }
 
     public function getPathname(): string
