@@ -6,6 +6,7 @@ namespace Keboola\GoogleSheetsWriter;
 
 use Keboola\GoogleSheetsClient\Client;
 use Keboola\GoogleSheetsWriter\Configuration\ConfigDefinition;
+use Keboola\GoogleSheetsWriter\Exception\UserException;
 use Keboola\GoogleSheetsWriter\Input\TableFactory;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
@@ -59,6 +60,21 @@ class Writer
                 if ($sheetCfg['sheetMode'] === ConfigDefinition::SHEET_MODE_ADD) {
                     $sheetProperties = $this->addSheet($sheetCfg);
                     $sheetCfg['sheetId'] = (int) $sheetProperties['sheetId'];
+                }
+
+                // "sheetId" is an optional node in ConfigDefinition and is only filled in by the
+                // "add" branch above, so a sheet left in the default "replace" mode without one
+                // passed config validation and then died in Sheet::process() on an undefined array
+                // key - an opaque internal error that says nothing to the user. Surface the missing
+                // value as a clear user error instead; a configured sheetId is untouched.
+                if (!isset($sheetCfg['sheetId'])) {
+                    throw new UserException(sprintf(
+                        'Sheet "%s" in file "%s" is missing the "sheetId" configuration value. '
+                        . 'Select an existing sheet for this table, or set the sheet mode to "add" '
+                        . 'to have a new sheet created.',
+                        $sheetCfg['sheetTitle'],
+                        $sheetCfg['title'],
+                    ));
                 }
 
                 $sheetWriter = new Sheet(
