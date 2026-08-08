@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/keboola/google-sheets-writer/blob/master/LICENSE.md)
 
-Writes data into Google Drive files and spreadsheets.
+This component writes data to Google Drive files and spreadsheets.
 
-## Example configuration
+## Example Configuration
 
 ```json
 {}
@@ -12,14 +12,19 @@ Writes data into Google Drive files and spreadsheets.
 
 ## OAuth Registration
 
-Note that this writer is using [Keboola OAuth Bundle](https://github.com/keboola/oauth-v2-bundle) to store OAuth credentials.
+This writer uses the [Keboola OAuth Bundle](https://github.com/keboola/oauth-v2-bundle) to store OAuth credentials.
 
-1. Create application in Google Developer console.
+1. Create an application in the Google Developer Console:
 
-- Enable APIs: `Google Drive API`, ` Google Sheets API`
-- Go to `Credentials` section and create new credentials of type `OAuth Client ID`. Use `https://SYRUP_INSTANCE.keboola.com/oauth-v2/authorize/keboola.ex-google-drive/callback` as redirect URI.
+- Enable the following APIs:
+    - `Google Drive API`
+    - ` Google Sheets API`
+- Got to the **Credentials** section and create a new credential of type `OAuth Client ID`.
+- Use `https://SYRUP_INSTANCE.keboola.com/oauth-v2/authorize/keboola.ex-google-drive/callback` as a redirect URI.
 
-2. Register application in Keboola Oauth [http://docs.oauthv2.apiary.io/#reference/manage/addlist-supported-api/add-new-component](http://docs.oauthv2.apiary.io/#reference/manage/addlist-supported-api/add-new-component)
+2. Register the application in Keboola Oauth.
+
+- Follow the instructions in the [OAuth v2 API documentation](http://docs.oauthv2.apiary.io/#reference/manage/addlist-supported-api/add-new-component).
 
 
 ```
@@ -36,18 +41,20 @@ Note that this writer is using [Keboola OAuth Bundle](https://github.com/keboola
 
 ## Development
 
-App is developed on localhost using TDD.
+This application is developed locally using Test-Driven Development (TDD).
 
-1. Clone from repository: `git clone git@github.com:keboola/google-sheets-writer.git`
-2. Change directory: `cd google-sheets-writer`
+1. Clone the repository: `git clone git@github.com:keboola/google-sheets-writer.git`
+2. Navigate to the project directory: `cd google-sheets-writer`
 3. Install dependencies: `docker-compose run --rm dev composer install`
-4. Create `.env` file from template `.env.dist`. 
-5. You will need working OAuth credentials. 
-    - Go to Googles [OAuth 2.0 Playground](https://developers.google.com/oauthplayground). 
-    - In the configuration (the cog wheel on the top right side) check `Use your own OAuth credentials` and paste your OAuth Client ID and Secret.
-    - Go through the authorization flow and generate `Access` and `Refresh` tokens. Copy and paste them into the `.env` file.    
-6. Run the tests: `docker-compose run --rm dev composer tests`
+4. Create a `.env` file from the template `.env.dist`. 
+5. Obtaing working OAuth credentials: 
+    - Visit Google's [OAuth 2.0 Playground](https://developers.google.com/oauthplayground). 
+    - Open the configuration settings (gear icon in the top right corner).
+    - Enable **Use your own OAuth credentials** and enter your OAuth Client ID and Secret.
+    - Complete the authorization flor to generate **Access** and **Refresh** tokens.
+    - Copy and paste these tokens into the `.env` file.    
+6. Run the test suite: `docker-compose run --rm dev composer tests`
 
 ## License
 
-MIT licensed, see [LICENSE](./LICENSE) file.
+The project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
